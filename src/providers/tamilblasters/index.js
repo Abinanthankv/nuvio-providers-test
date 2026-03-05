@@ -416,7 +416,7 @@ async function extractFromGenericEmbed(embedUrl, hostName) {
     // Check if it's a landing page
     if (html.includes('<title>Loading...</title>') || html.includes('Page is loading')) {
       console.log(`[Tamilblasters] Detected landing page on ${hostName}, trying mirrors...`);
-      const mirrors = ['yuguaab.com', 'cavanhabg.com'];
+      const mirrors = ['yuguaab.com', 'cavanhabg.com', 'vibuxer.com', 'yuguaab.pro'];
       for (const mirror of mirrors) {
         if (hostName.includes(mirror)) continue;
         const mirrorUrl = embedUrl.replace(hostName, mirror);
@@ -448,6 +448,8 @@ async function extractFromGenericEmbed(embedUrl, hostName) {
       /sources\s*:\s*\[\s*{\s*file\s*:\s*["']([^"']+)["']/gi,
       /https?:\/\/[^\s"']+\.m3u8[^\s"']*/gi,
       /["'](\/[^\s"']+\.m3u8[^\s"']*)["']/gi,
+      /https?:\/\/[^\s"']+\.mp4[^\s"']*/gi,
+      /(?:source|file|src)\s*[:=]\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)["']/gi,
     ];
 
     const allFoundUrls = [];

@@ -1,6 +1,6 @@
 /**
  * tamilblasters - Built from src/tamilblasters/
- * Generated: 2026-03-05T15:20:52.860Z
+ * Generated: 2026-03-05T16:00:59.457Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -323,7 +323,7 @@ function extractFromGenericEmbed(embedUrl, hostName) {
       let html = yield response.text();
       if (html.includes("<title>Loading...</title>") || html.includes("Page is loading")) {
         console.log(`[Tamilblasters] Detected landing page on ${hostName}, trying mirrors...`);
-        const mirrors = ["yuguaab.com", "cavanhabg.com"];
+        const mirrors = ["yuguaab.com", "cavanhabg.com", "vibuxer.com", "yuguaab.pro"];
         for (const mirror of mirrors) {
           if (hostName.includes(mirror))
             continue;
@@ -352,7 +352,9 @@ function extractFromGenericEmbed(embedUrl, hostName) {
         /["']hls[2-4]["']\s*:\s*["']([^"']+)["']/gi,
         /sources\s*:\s*\[\s*{\s*file\s*:\s*["']([^"']+)["']/gi,
         /https?:\/\/[^\s"']+\.m3u8[^\s"']*/gi,
-        /["'](\/[^\s"']+\.m3u8[^\s"']*)["']/gi
+        /["'](\/[^\s"']+\.m3u8[^\s"']*)["']/gi,
+        /https?:\/\/[^\s"']+\.mp4[^\s"']*/gi,
+        /(?:source|file|src)\s*[:=]\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)["']/gi
       ];
       const allFoundUrls = [];
       for (const pattern of patterns) {
