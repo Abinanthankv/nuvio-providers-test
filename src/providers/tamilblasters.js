@@ -1,6 +1,6 @@
 /**
  * tamilblasters - Built from src/tamilblasters/
- * Generated: 2026-03-05T16:00:59.457Z
+ * Generated: 2026-03-05T16:24:28.563Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -322,20 +322,46 @@ function extractFromGenericEmbed(embedUrl, hostName) {
       }, 5e3);
       let html = yield response.text();
       if (html.includes("<title>Loading...</title>") || html.includes("Page is loading")) {
-        console.log(`[Tamilblasters] Detected landing page on ${hostName}, trying mirrors...`);
-        const mirrors = ["yuguaab.com", "cavanhabg.com", "vibuxer.com", "yuguaab.pro"];
-        for (const mirror of mirrors) {
-          if (hostName.includes(mirror))
-            continue;
-          const mirrorUrl = embedUrl.replace(hostName, mirror);
+        console.log(`[Tamilblasters] Detected landing page on ${hostName}, finding mirrors...`);
+        const mirrorPatterns = [
+          /["']([^"']+\.(?:yuguaab|cavanhabg|vibuxer|yuguaabpro|hgcloud|streamtape|doedly|akamaized|mcloud)[^"']+)["']/gi,
+          /(?:href|src|url)\s*[=:]\s*["']([^"']*hgcloud[^"']*)["']/gi,
+          /window\.location\.href\s*=\s*["']([^"']+)["']/gi,
+          /(?:redirect|go|nav|load)\s*\(\s*["']([^"']+)["']\s*\)/gi
+        ];
+        const foundMirrors = /* @__PURE__ */ new Set();
+        for (const pattern of mirrorPatterns) {
+          const matches = html.match(pattern);
+          if (matches) {
+            for (let match of matches) {
+              const urlMatch = match.match(/https?:\/\/([^"\/\s]+)/);
+              if (urlMatch) {
+                const domain = urlMatch[1];
+                if (domain !== hostName && !domain.includes(hostName)) {
+                  foundMirrors.add(domain);
+                }
+              }
+            }
+          }
+        }
+        const fallbackMirrors = ["yuguaab.com", "cavanhabg.com", "vibuxer.com", "yuguaab.pro", "streamtape.com", "doedly.com"];
+        let mirrors = Array.from(foundMirrors);
+        if (mirrors.length === 0) {
+          mirrors = fallbackMirrors.filter((m) => !hostName.includes(m));
+        }
+        console.log(`[Tamilblasters] Found mirrors: ${mirrors.join(", ")}`);
+        for (const mirror of mirrors.slice(0, 5)) {
           try {
-            const mirrorRes = yield fetchWithTimeout(mirrorUrl, { headers: __spreadProps(__spreadValues({}, HEADERS), { "Referer": MAIN_URL }) }, 3e3);
+            const mirrorUrl = embedUrl.replace(hostName, mirror);
+            const mirrorRes = yield fetchWithTimeout(mirrorUrl, { headers: __spreadProps(__spreadValues({}, HEADERS), { "Referer": MAIN_URL }) }, 4e3);
             const mirrorHtml = yield mirrorRes.text();
-            if (mirrorHtml.includes("jwplayer") || mirrorHtml.includes("sources") || mirrorHtml.includes("eval(function(p,a,c,k,e,d)")) {
+            if (mirrorHtml.includes("jwplayer") || mirrorHtml.includes("sources") || mirrorHtml.includes(".m3u8") || mirrorHtml.includes("eval(function(p,a,c,k,e,d)")) {
+              console.log(`[Tamilblasters] Found working mirror: ${mirror}`);
               html = mirrorHtml;
               break;
             }
           } catch (e) {
+            console.log(`[Tamilblasters] Mirror ${mirror} failed: ${e.message}`);
           }
         }
       }
@@ -395,8 +421,19 @@ function extractFromGenericEmbed(embedUrl, hostName) {
           return a.length - b.length;
         });
         const bestUrl = allFoundUrls[0];
-        console.log(`[Tamilblasters] Detected best URL: ${bestUrl}. Resolving quality...`);
-        return yield detectQualityFromM3U8(bestUrl);
+        try {
+          console.log(`[Tamilblasters] Detected best URL: ${bestUrl}. Resolving quality...`);
+          const qualityData = yield Promise.race([
+            detectQualityFromM3U8(bestUrl),
+            new Promise((resolve) => setTimeout(() => resolve(null), 3e3))
+          ]);
+          if (qualityData)
+            return qualityData;
+          console.log(`[Tamilblasters] Quality resolution timed out for ${bestUrl}, using default.`);
+        } catch (e) {
+          console.log(`[Tamilblasters] Quality resolution failed: ${e.message}`);
+        }
+        return { variants: [{ url: bestUrl, quality: "Unknown" }], audios: [], isMaster: false, masterUrl: bestUrl };
       }
       return [];
     } catch (error) {
@@ -445,7 +482,7 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
       const topMatches = uniqueMatches.slice(0, 3);
       console.log(`[Tamilblasters] Processing top ${topMatches.length} unique matches out of ${allMatches.length} total`);
       const allValidStreams = [];
-      const targetResults = 5;
+      const targetResults = 20;
       const matchConcurrencyLimit = 2;
       const matchActiveTasks = /* @__PURE__ */ new Set();
       let isTerminated = false;
@@ -492,9 +529,9 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
               }
               current = prev;
             }
-            let displayLabel = episodeLabel || $(el).closest("div").prev("p").text().trim() || "Stream " + (i + 1);
-            if (displayLabel.toLowerCase().includes("episode")) {
-              const epMatch = displayLabel.match(/Episode\s*[–-ー]\s*(\d+)/i) || displayLabel.match(/Episode\s*(\d+)/i);
+            let displayLabel = episodeLabel || $(el).closest("div").prev("p").text().trim() || $(el).parent().text().trim().substring(0, 50) || "Stream " + (i + 1);
+            if (displayLabel.toLowerCase().includes("episode") || displayLabel.match(/EP\s*\d+/i)) {
+              const epMatch = displayLabel.match(/(?:Episode|EP)\s*[–-ー]?\s*(\d+)/i);
               if (epMatch) {
                 displayLabel = `EP${epMatch[1]}`;
               }
@@ -543,9 +580,32 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
               matchTitle: match.title
             });
           });
-          const limitedStreams = rawStreams.slice(0, 5);
-          if (rawStreams.length > 5) {
-            console.log(`[Tamilblasters] Limiting to first 5 iframes out of ${rawStreams.length} for performance`);
+          let streamsToProcess = rawStreams;
+          if (episode !== null) {
+            const epNum = parseInt(episode);
+            const reqEp = `E${epNum.toString().padStart(2, "0")}`;
+            const epRegex = new RegExp(`\\b(EP|EPISODE|E)\\s*0*${epNum}\\b`, "i");
+            streamsToProcess = rawStreams.filter((s) => {
+              const label = s.label.toUpperCase();
+              const epCode = s.episodeCode.toUpperCase();
+              if (epRegex.test(label))
+                return true;
+              if (epCode === reqEp)
+                return true;
+              const codeEpMatch = epCode.match(/E(\d+)/i);
+              if (codeEpMatch && parseInt(codeEpMatch[1]) === epNum)
+                return true;
+              return false;
+            });
+            if (streamsToProcess.length === 0) {
+              console.log(`[Tamilblasters] No specific iframes matched episode ${episode} labels, processing first 10 as fallback.`);
+              streamsToProcess = rawStreams;
+            }
+          }
+          const isTV = episode !== null;
+          const limitedStreams = streamsToProcess.slice(0, isTV ? 40 : 10);
+          if (streamsToProcess.length > (isTV ? 40 : 10)) {
+            console.log(`[Tamilblasters] Limiting to first ${isTV ? 40 : 10} matching iframes out of ${streamsToProcess.length} for performance`);
           }
           console.log(`[Tamilblasters] Extracting direct streams from ${limitedStreams.length} embed URLs for "${match.title}"...`);
           const directStreams = [];
@@ -559,7 +619,7 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
               const result = yield Promise.race([
                 extractDirectStream(stream.url),
                 new Promise(
-                  (_, reject) => setTimeout(() => reject(new Error("Extraction timeout after 5 seconds")), 5e3)
+                  (_, reject) => setTimeout(() => reject(new Error("Extraction timeout after 15 seconds")), 15e3)
                 )
               ]);
               if (result && result.variants && result.variants.length > 0) {
@@ -617,20 +677,27 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
             const reqSeasonLower = season !== null ? `s${season.toString().padStart(2, "0")}` : null;
             const matchHasCorrectSeason = !reqSeason || match.title.toUpperCase().includes(reqSeason) || match.title.toLowerCase().includes(reqSeasonLower);
             if (matchHasCorrectSeason) {
+              const epNum = parseInt(episode);
+              const reqEp = `E${epNum.toString().padStart(2, "0")}`;
+              const epRegex = new RegExp(`\\b(EP|EPISODE|E)\\s*0*${epNum}\\b`, "i");
               const filtered = validStreams.filter((s) => {
-                if (!reqEpUpper)
+                if (isNaN(epNum))
                   return true;
-                const streamEpInfo = `${s.label} ${s.episodeCode}`.toUpperCase();
-                const hasStreamEp = streamEpInfo.includes("EP") || streamEpInfo.includes("E") || /\d+/.test(s.episodeCode);
-                if (hasStreamEp) {
-                  const searchStr = streamEpInfo;
-                  const searchStrLower = searchStr.toLowerCase();
-                  return searchStr.includes(reqEpUpper) || searchStrLower.includes(reqEpLower) || searchStrLower.includes(reqEpSpaced) || searchStr.includes(`EPISODE ${episode}`);
-                } else {
-                  const searchStr = `${s.matchTitle}`.toUpperCase();
-                  const searchStrLower = searchStr.toLowerCase();
-                  return searchStr.includes(reqEpUpper) || searchStrLower.includes(reqEpLower) || searchStrLower.includes(reqEpSpaced) || searchStr.includes(`EPISODE ${episode}`);
+                const label = s.label.toUpperCase();
+                const epCode = s.episodeCode.toUpperCase();
+                const matchTitle2 = (s.matchTitle || "").toUpperCase();
+                if (epRegex.test(label))
+                  return true;
+                if (epCode === reqEp)
+                  return true;
+                const codeEpMatch = epCode.match(/E(\d+)/i);
+                if (codeEpMatch && parseInt(codeEpMatch[1]) === epNum)
+                  return true;
+                const hasStreamEpInfo = label.includes("EP") || label.includes("E") || /\d+/.test(epCode);
+                if (!hasStreamEpInfo) {
+                  return epRegex.test(matchTitle2);
                 }
+                return false;
               });
               validStreams = filtered;
               if (filtered.length > 0) {
