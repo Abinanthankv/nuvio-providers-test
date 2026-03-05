@@ -2,7 +2,7 @@ const { getStreams } = require('./src/providers/tamilblasters/index.js');
 
 async function test() {
     console.log("Starting Tamilblasters test...");
-    const query = process.argv[2] || 'Leo';
+    const query = process.argv[2] || 'LBW';
     const mediaType = process.argv[3] || 'movie';
     const season = process.argv[4] ? parseInt(process.argv[4]) : null;
     const episode = process.argv[5] ? parseInt(process.argv[5]) : null;

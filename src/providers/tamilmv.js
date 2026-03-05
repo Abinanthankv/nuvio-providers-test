@@ -1,6 +1,6 @@
 /**
  * tamilmv - Built from src/tamilmv/
- * Generated: 2026-03-05T14:23:58.945Z
+ * Generated: 2026-03-05T15:20:52.867Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -46,7 +46,7 @@ var __async = (__this, __arguments, generator) => {
 var cheerio = require("cheerio-without-node-native");
 var TMDB_API_KEY = "1b3113663c9004682ed61086cf967c44";
 var TMDB_BASE_URL = "https://api.themoviedb.org/3";
-var MAIN_URL = "https://www.1tamilmv.lc";
+var MAIN_URL = "https://www.1tamilmv.gs";
 var HEADERS = {
   "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
   "Referer": `${MAIN_URL}/`
@@ -298,10 +298,57 @@ function getTMDBDetails(tmdbId, mediaType) {
     }
   });
 }
+function searchTamilMV(query, year = null) {
+  return __async(this, null, function* () {
+    console.log(`[TamilMV] Searching for: "${query}"`);
+    const results = [];
+    const slugBase = query.toLowerCase().replace(/[^a-z0-9]/g, "-");
+    const searchUrls = [
+      `${MAIN_URL}/index.php?/forums/tags/`,
+      `${MAIN_URL}/index.php?/forums/filter/`
+    ];
+    const guessUrls = [
+      `${MAIN_URL}/index.php?/forums/topic/${slugBase}-${year || ""}/`,
+      `${MAIN_URL}/index.php?/forums/topic/${slugBase}/`
+    ];
+    try {
+      const searchUrl = `${MAIN_URL}/search/?q=${encodeURIComponent(query)}`;
+      console.log(`[TamilMV] Trying search: ${searchUrl}`);
+      const response = yield fetchWithTimeout(searchUrl, { headers: HEADERS }, 8e3);
+      if (response.ok) {
+        const html = yield response.text();
+        const $ = cheerio.load(html);
+        $('a[href*="/forums/topic/"]').each((i, el) => {
+          const href = $(el).attr("href");
+          const text = $(el).text().trim();
+          if (href && text && text.length > 5 && !text.includes("login") && !text.includes("register")) {
+            const fullUrl = href.startsWith("http") ? href : MAIN_URL + href;
+            if (!results.some((r) => r.href === fullUrl)) {
+              results.push({ title: text, url: fullUrl });
+            }
+          }
+        });
+      }
+    } catch (e) {
+      console.log(`[TamilMV] Search failed: ${e.message}`);
+    }
+    if (results.length === 0) {
+      try {
+        const homeResponse = yield fetchWithTimeout(MAIN_URL, { headers: HEADERS }, 8e3);
+        const homeHtml = yield homeResponse.text();
+        const watchLinks = extractHomepageWatchLinks(homeHtml);
+        return watchLinks;
+      } catch (e) {
+        console.log(`[TamilMV] Homepage fallback failed: ${e.message}`);
+      }
+    }
+    return results;
+  });
+}
 function extractHomepageWatchLinks(html) {
   const $ = cheerio.load(html);
   const results = [];
-  $('a:contains("[WATCH]")').each((i, el) => {
+  $('a:contains("[WATCH]"), a:contains("[W]")').each((i, el) => {
     const watchUrl = $(el).attr("href");
     if (!watchUrl)
       return;
@@ -315,7 +362,7 @@ function extractHomepageWatchLinks(html) {
       const tag = curr.tagName ? curr.tagName.toLowerCase() : null;
       if (tag === "br" || tag === "p" || tag === "hr" || tag === "div")
         break;
-      if ($curr.text().includes("[WATCH]"))
+      if ($curr.text().includes("[WATCH]") || $curr.text().includes("[W]"))
         break;
       titleNodes.unshift(curr);
       curr = curr.previousSibling;
@@ -341,20 +388,25 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
         try {
           mediaInfo = yield getTMDBDetails(tmdbId, mediaType);
         } catch (error) {
-          console.log(`[TamilMV] TMDB fetch failed for ${tmdbId}, using as search query`);
           mediaInfo = { title: tmdbId, year: null };
         }
       } else {
-        console.log(`[TamilMV] Using "${tmdbId}" as search query directly`);
         mediaInfo = { title: tmdbId, year: null };
+        const yearMatch = tmdbId.match(/\b(19|20)\d{2}\b/);
+        if (yearMatch) {
+          mediaInfo.year = yearMatch[0];
+          mediaInfo.title = tmdbId.replace(yearMatch[0], "").trim();
+        }
       }
-      console.log(`[TamilMV] Looking for ${mediaInfo.title} (${mediaInfo.year}) on homepage`);
-      const homeResponse = yield fetch(MAIN_URL, { headers: HEADERS });
-      const homeHtml = yield homeResponse.text();
-      const watchLinks = extractHomepageWatchLinks(homeHtml);
-      const bestMatch = findBestTitleMatch(mediaInfo, watchLinks);
+      console.log(`[TamilMV] Searching for: ${mediaInfo.title} (${mediaInfo.year})`);
+      const searchResults = yield searchTamilMV(mediaInfo.title, mediaInfo.year);
+      if (!searchResults || searchResults.length === 0) {
+        console.warn("[TamilMV] No search results found");
+        return [];
+      }
+      const bestMatch = findBestTitleMatch(mediaInfo, searchResults);
       if (!bestMatch) {
-        console.warn("[TamilMV] No matching title with [WATCH] link found on homepage");
+        console.warn("[TamilMV] No matching title with [WATCH] or [W] link found on homepage");
         return [];
       }
       console.log(`[TamilMV] Found watch link for: ${bestMatch.title}`);

@@ -1,6 +1,6 @@
 /**
  * tamilblasters - Built from src/tamilblasters/
- * Generated: 2026-03-05T14:23:58.940Z
+ * Generated: 2026-03-05T15:20:52.860Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -46,7 +46,7 @@ var __async = (__this, __arguments, generator) => {
 var cheerio = require("cheerio-without-node-native");
 var TMDB_API_KEY = "1b3113663c9004682ed61086cf967c44";
 var TMDB_BASE_URL = "https://api.themoviedb.org/3";
-var MAIN_URL = "https://www.1tamilblasters.business";
+var MAIN_URL = "https://www.1tamilblasters.company";
 var HEADERS = {
   "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
   "Referer": `${MAIN_URL}/`
