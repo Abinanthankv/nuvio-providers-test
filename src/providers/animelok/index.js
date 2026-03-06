@@ -1,6 +1,6 @@
 const cheerio = require('cheerio-without-node-native');
 
-const BASE_URL = 'https://animelok.to';
+const BASE_URL = 'https://Animelok.site';
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
 async function fetchWithTimeout(url, options = {}, timeout = 10000) {
@@ -107,7 +107,7 @@ async function getStreams(id, type, season, episode) {
         }
     }
 
-    const apiUrl = `${BASE_URL}/api/anime/${animeSlug}/episodes/${episode}`;
+    const apiUrl = `${BASE_URL}/anime/${animeSlug}/episodes/${episode}`;
 
     console.log(`Fetching streams for ${animeSlug} episode ${episode} from ${apiUrl}...`);
 

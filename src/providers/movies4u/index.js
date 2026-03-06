@@ -551,7 +551,11 @@ async function getStreams(tmdbId, mediaType = 'movie', season = null, episode = 
                     title: formatStreamTitle(mediaInfo, streamObj),
                     url: result.url,
                     quality: streamObj.quality,
-                    headers: { "Referer": M4UPLAY_BASE, "User-Agent": HEADERS["User-Agent"] },
+                    headers: { 
+                        "Referer": "https://m4uplay.store/",
+                        "User-Agent": HEADERS["User-Agent"],
+                        "Origin": "https://m4uplay.store"
+                    },
                     provider: 'Movies4u'
                 });
             }

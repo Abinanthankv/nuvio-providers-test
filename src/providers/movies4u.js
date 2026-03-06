@@ -1,6 +1,6 @@
 /**
  * movies4u - Built from src/movies4u/
- * Generated: 2026-03-05T16:24:28.557Z
+ * Generated: 2026-03-06T14:24:07.911Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -467,7 +467,11 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
             title: formatStreamTitle(mediaInfo, streamObj),
             url: result.url,
             quality: streamObj.quality,
-            headers: { "Referer": M4UPLAY_BASE, "User-Agent": HEADERS["User-Agent"] },
+            headers: {
+              "Referer": "https://m4uplay.store/",
+              "User-Agent": HEADERS["User-Agent"],
+              "Origin": "https://m4uplay.store"
+            },
             provider: "Movies4u"
           });
         }

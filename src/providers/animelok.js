@@ -1,6 +1,6 @@
 /**
  * animelok - Built from src/animelok/
- * Generated: 2026-03-05T16:24:28.538Z
+ * Generated: 2026-03-06T14:24:07.881Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -44,7 +44,7 @@ var __async = (__this, __arguments, generator) => {
 
 // src/providers/animelok/index.js
 var cheerio = require("cheerio-without-node-native");
-var BASE_URL = "https://animelok.to";
+var BASE_URL = "https://Animelok.site";
 var USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 function fetchWithTimeout(_0) {
   return __async(this, arguments, function* (url, options = {}, timeout = 1e4) {
@@ -146,7 +146,7 @@ function getStreams(id, type, season, episode) {
         return [];
       }
     }
-    const apiUrl = `${BASE_URL}/api/anime/${animeSlug}/episodes/${episode}`;
+    const apiUrl = `${BASE_URL}/anime/${animeSlug}/episodes/${episode}`;
     console.log(`Fetching streams for ${animeSlug} episode ${episode} from ${apiUrl}...`);
     try {
       const response = yield fetchWithTimeout(apiUrl, {
