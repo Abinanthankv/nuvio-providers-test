@@ -8,7 +8,7 @@ const TMDB_API_KEY = '1b3113663c9004682ed61086cf967c44';
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
 // TamilMV Configuration
-let MAIN_URL = "https://www.1tamilmv.gs";
+let MAIN_URL = "https://www.1tamilmv.immo"
 
 const HEADERS = {
   "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
