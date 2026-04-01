@@ -55,26 +55,15 @@ async function getReadyDomain() {
 }
 
 /**
- * Fetch with timeout to prevent hanging requests
+ * Fetch with timeout using Promise.race for better RN compatibility
  */
 async function fetchWithTimeout(url, options = {}, timeout = 10000) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-  try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    if (error.name === 'AbortError') {
-      throw new Error(`Request timeout after ${timeout}ms`);
-    }
-    throw error;
-  }
+  return Promise.race([
+    fetch(url, { ...options }),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`Timeout after ${timeout}ms`)), timeout)
+    )
+  ]);
 }
 
 /**
@@ -104,10 +93,15 @@ function normalizeTitle(title) {
 }
 
 /**
+ * Converts string to Title Case
+ */
+function toTitleCase(str) {
+  if (!str) return '';
+  return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+}
+
+/**
  * Calculates similarity score between two titles
- * @param {string} title1 First title
- * @param {string} title2 Second title
- * @returns {number} Similarity score (0-1)
  */
 function calculateTitleSimilarity(title1, title2) {
   const norm1 = normalizeTitle(title1);
@@ -176,6 +170,24 @@ function findBestTitleMatch(mediaInfo, watchLinks) {
   }
 
   return null;
+}
+
+/**
+ * Formats a rich multi-line title for a stream
+ */
+function formatStreamTitle(mediaInfo, stream) {
+  const { title: movieTitle, year } = mediaInfo;
+  const { quality = "Unknown", size = "Unknown", language = "Tamil", type = "Movie" } = stream;
+
+  const displayTitle = toTitleCase(movieTitle);
+  const yearStr = year ? ` (${year})` : "";
+  
+  const typeLine = type ? `📹: ${type}\n` : "";
+  const sizeLine = size && size !== "Unknown" ? `💾: ${size}\n` : "";
+
+  return `TamilMV (Instant) (${quality})
+${typeLine}📼: ${displayTitle}${yearStr} ${quality}
+${sizeLine}🌐: ${language.toUpperCase()}`;
 }
 
 // =================================================================================
@@ -400,61 +412,87 @@ async function getTMDBDetails(tmdbId, mediaType) {
  * Searches TamilMV for movies
  */
 async function searchTamilMV(query, year = null) {
-  console.log(`[TamilMV] Searching for: "${query}"`);
-  
   const results = [];
-  const slugBase = query.toLowerCase().replace(/[^a-z0-9]/g, '-');
+  const slugBase = query.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
   
   let domainsToTry = [MAIN_URL, ...POTENTIAL_DOMAINS.filter(d => d !== MAIN_URL)];
 
   for (const domain of domainsToTry) {
     try {
+      console.log(`[TamilMV] Trying domain: ${domain}`);
+      
+      // 1. Try direct search page
       const searchUrl = `${domain}/search/?q=${encodeURIComponent(query)}`;
-      console.log(`[TamilMV] Trying search on ${domain}: ${searchUrl}`);
       const response = await fetchWithTimeout(searchUrl, { headers: { ...HEADERS, Referer: `${domain}/` } }, 8000);
       
       if (response.ok) {
-        // Update MAIN_URL if we're using a different one
-        if (domain !== MAIN_URL) {
-          console.log(`[TamilMV] Rotating to working domain: ${domain}`);
-          MAIN_URL = domain;
-          HEADERS.Referer = `${MAIN_URL}/`;
-        }
-
         const html = await response.text();
         const $ = cheerio.load(html);
         
-        // Look for topic links in search results
+        const topics = [];
         $('a[href*="/forums/topic/"]').each((i, el) => {
           const href = $(el).attr('href');
           const text = $(el).text().trim();
-          
-          if (href && text && text.length > 5 && !text.includes('login') && !text.includes('register')) {
-            const fullUrl = href.startsWith('http') ? href : domain + href;
-            if (!results.some(r => r.href === fullUrl)) {
-              results.push({ title: text, url: fullUrl });
-            }
+          if (href && text && text.length > 5 && !text.includes('login')) {
+            const fullUrl = href.startsWith('http') ? href : domain + (href.startsWith('/') ? '' : '/') + href;
+            topics.push({ title: text, url: fullUrl });
           }
         });
 
-        if (results.length > 0 || html.includes('no results found')) {
-          return results;
+        // For each topic found, visit it to find [WATCH] links
+        for (const topic of topics.slice(0, 3)) {
+          try {
+            console.log(`[TamilMV] Checking topic for watch links: ${topic.title}`);
+            const topicRes = await fetchWithTimeout(topic.url, { headers: { ...HEADERS, Referer: searchUrl } }, 5000);
+            if (topicRes.ok) {
+              const topicHtml = await topicRes.text();
+              const watchLinks = extractHomepageWatchLinks(topicHtml); // Reusing the same logic
+              if (watchLinks.length > 0) {
+                 for (const wl of watchLinks) {
+                    results.push({ 
+                       title: topic.title + " " + wl.title, 
+                       url: wl.watchUrl.startsWith('http') ? wl.watchUrl : domain + (wl.watchUrl.startsWith('/') ? '' : '/') + wl.watchUrl 
+                    });
+                 }
+              }
+            }
+          } catch (e) {}
         }
       }
+
+      if (results.length > 0) {
+        if (domain !== MAIN_URL) {
+          MAIN_URL = domain;
+          HEADERS.Referer = `${MAIN_URL}/`;
+        }
+        return results;
+      }
+
+      // 2. Fallback: Homepage watch links
+      const homeResponse = await fetchWithTimeout(domain, { headers: { ...HEADERS, Referer: domain } }, 5000);
+      if (homeResponse.ok) {
+        const homeHtml = await homeResponse.text();
+        const watchLinks = extractHomepageWatchLinks(homeHtml);
+        const homeResults = watchLinks.map(l => ({ 
+          title: l.title, 
+          url: l.watchUrl.startsWith('http') ? l.watchUrl : domain + (l.watchUrl.startsWith('/') ? '' : '/') + l.watchUrl 
+        }));
+        if (homeResults.length > 0) {
+           // We'll filter these later by similarity
+           results.push(...homeResults);
+        }
+      }
+
+      if (results.length > 0) {
+        if (domain !== MAIN_URL) {
+          MAIN_URL = domain;
+          HEADERS.Referer = `${MAIN_URL}/`;
+        }
+        return results;
+      }
+
     } catch (e) {
-      console.log(`[TamilMV] Search failed on ${domain}: ${e.message}`);
-    }
-  }
-  
-  // Try homepage as fallback for last successful MAIN_URL
-  if (results.length === 0) {
-    try {
-      const homeResponse = await fetchWithTimeout(MAIN_URL, { headers: HEADERS }, 8000);
-      const homeHtml = await homeResponse.text();
-      const watchLinks = extractHomepageWatchLinks(homeHtml);
-      return watchLinks;
-    } catch (e) {
-      console.log(`[TamilMV] Homepage fallback failed: ${e.message}`);
+      console.log(`[TamilMV] Domain ${domain} failed: ${e.message}`);
     }
   }
   
@@ -551,35 +589,63 @@ async function getStreams(tmdbId, mediaType = 'movie', season = null, episode = 
       return [];
     }
 
-    const bestMatch = findBestTitleMatch(mediaInfo, searchResults);
+    const matches = searchResults.filter(r => calculateTitleSimilarity(mediaInfo.title, r.title) > 0.35);
 
-    if (!bestMatch) {
-      console.warn("[TamilMV] No matching title with [WATCH] or [W] link found on homepage");
-      return [];
+    if (matches.length === 0) {
+      console.warn("[Tamilmv] No matching titles found");
+      // As a fallback, try matching with the movie name directly if search results exist
+      const directMatches = searchResults.filter(r => r.title.toLowerCase().includes(mediaInfo.title.toLowerCase()));
+      if (directMatches.length > 0) matches.push(...directMatches);
+      else return [];
     }
 
-    console.log(`[TamilMV] Found watch link for: ${bestMatch.title}`);
+    const finalStreams = [];
+    const topMatches = matches.slice(0, 5); // Process up to 5 matches
+    
+    for (const match of topMatches) {
+      console.log(`[Tamilmv] Processing match: ${match.title}`);
+      
+      const watchUrl = match.url; // searchTamilMV result now has url property
+      if (!watchUrl) continue;
 
-    // Try to extract direct stream from the watch URL
-    console.log(`[TamilMV] Extracting direct stream from watch URL...`);
-    const directUrl = await extractDirectStream(bestMatch.watchUrl);
+      try {
+        const directUrl = await extractDirectStream(watchUrl);
+        if (directUrl) {
+          const quality = match.title.includes("2160p") || match.title.includes("4K") ? "4K" :
+                          match.title.includes("1080p") ? "1080p" :
+                          match.title.includes("720p") ? "720p" : 
+                          match.title.includes("480p") ? "480p" : "HD";
+          
+          let size = "Unknown";
+          const sizeMatch = match.title.match(/(\d+(?:\.\d+)?\s*(?:GB|MB))/i);
+          if (sizeMatch) size = sizeMatch[1];
 
-    if (!directUrl) {
-      console.log(`[TamilMV] Could not extract direct stream, skipping`);
-      return [];
+          const streamObj = {
+            quality,
+            size,
+            language: match.title.toLowerCase().includes("tam") ? "Tamil" : "Multi",
+            type: mediaType === 'movie' ? "Movie" : "TV Show"
+          };
+
+          finalStreams.push({
+            name: "Tamilmv",
+            title: formatStreamTitle(mediaInfo, streamObj),
+            url: directUrl,
+            quality: quality,
+            headers: {
+              "Referer": MAIN_URL,
+              "User-Agent": HEADERS["User-Agent"]
+            },
+            provider: 'Tamilmv'
+          });
+        }
+      } catch (e) {
+        console.error(`[Tamilmv] Failed to process match ${match.title}:`, e.message);
+      }
     }
 
-    return [{
-      name: "TamilMV",
-      title: bestMatch.title.split(" - ")[0].trim(), // Clean title
-      url: directUrl,
-      quality: bestMatch.title.includes("720p") ? "720p" : bestMatch.title.includes("1080p") ? "1080p" : "Unknown",
-      headers: {
-        "Referer": MAIN_URL,
-        "User-Agent": HEADERS["User-Agent"]
-      },
-      provider: 'TamilMV'
-    }];
+    console.log(`[Tamilmv] Returning ${finalStreams.length} streams`);
+    return finalStreams;
 
   } catch (error) {
     console.error("[TamilMV] getStreams failed:", error.message);

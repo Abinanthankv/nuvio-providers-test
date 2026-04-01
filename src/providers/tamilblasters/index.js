@@ -69,23 +69,12 @@ async function getReadyDomain() {
  * @returns {Promise<Response>}
  */
 async function fetchWithTimeout(url, options = {}, timeout = 10000) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-  try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    if (error.name === 'AbortError') {
-      throw new Error(`Request timeout after ${timeout}ms`);
-    }
-    throw error;
-  }
+  return Promise.race([
+    fetch(url, { ...options }),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`Timeout after ${timeout}ms`)), timeout)
+    )
+  ]);
 }
 
 /**
