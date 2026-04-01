@@ -8,12 +8,54 @@ const TMDB_API_KEY = '1b3113663c9004682ed61086cf967c44';
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
 // Tamilblasters Configuration
-let MAIN_URL = "https://www.1tamilblasters.company";
+const POTENTIAL_DOMAINS = [
+  "https://www.1tamilblasters.company",
+  "https://www.1tamilblasters.asia",
+  "https://www.1tamilblasters.ws",
+  "https://www.1tamilblasters.rocks",
+  "https://www.1tamilblasters.net",
+  "https://www.1tamilblasters.com",
+];
+
+let MAIN_URL = POTENTIAL_DOMAINS[0];
 
 const HEADERS = {
   "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
   "Referer": `${MAIN_URL}/`,
 };
+
+/**
+ * Finds a working Tamilblasters domain
+ */
+async function getReadyDomain() {
+  console.log("[Tamilblasters] Checking for a working domain...");
+  
+  // Create an array of check promises
+  const checks = POTENTIAL_DOMAINS.map(async (domain) => {
+    try {
+      const response = await fetchWithTimeout(domain, { method: 'HEAD' }, 5000);
+      if (response.ok) return domain;
+      // Also try with GET if HEAD is not supported
+      const getResponse = await fetchWithTimeout(domain, { method: 'GET' }, 5000);
+      if (getResponse.ok) return domain;
+    } catch (e) {
+      // Domain unreachable
+    }
+    return null;
+  });
+
+  // Wait for the first working domain
+  for (const check of checks) {
+    const workingDomain = await check;
+    if (workingDomain) {
+      console.log(`[Tamilblasters] Found working domain: ${workingDomain}`);
+      return workingDomain;
+    }
+  }
+
+  // Fallback to original domain if none reachable
+  return POTENTIAL_DOMAINS[0];
+}
 
 // =================================================================================
 // UTILITY FUNCTIONS
@@ -236,47 +278,51 @@ async function getTMDBDetails(tmdbId, mediaType) {
 }
 
 /**
- * Searches Tamilblasters for the given query
+ * Searches Tamilblasters for the given query with domain rotation on failure
  */
 async function search(query) {
-  const url = `${MAIN_URL}/?s=${encodeURIComponent(query)}`;
-  console.log(`[Tamilblasters] Searching: ${url}`);
+  let domainsToTry = [MAIN_URL, ...POTENTIAL_DOMAINS.filter(d => d !== MAIN_URL)];
+  let lastError = null;
 
-  try {
-    const response = await fetchWithTimeout(url, { headers: HEADERS }, 8000);
+  for (const domain of domainsToTry) {
+    const url = `${domain}/?s=${encodeURIComponent(query)}`;
+    console.log(`[Tamilblasters] Searching: ${url}`);
 
-    // Detect if valid redirect happened (e.g. domain switch)
-    if (response.url && !response.url.includes(new URL(MAIN_URL).hostname)) {
-      try {
-        const finalUrl = new URL(response.url);
-        if (finalUrl.protocol.startsWith('http')) {
-          console.log(`[Tamilblasters] Domain redirect detected: ${MAIN_URL} -> ${finalUrl.origin}`);
-          MAIN_URL = finalUrl.origin;
-          HEADERS.Referer = `${MAIN_URL}/`;
+    try {
+      const response = await fetchWithTimeout(url, { headers: { ...HEADERS, Referer: `${domain}/` } }, 8000);
+
+      // Update MAIN_URL if we're using a different one
+      if (domain !== MAIN_URL) {
+        console.log(`[Tamilblasters] Rotating to working domain: ${domain}`);
+        MAIN_URL = domain;
+        HEADERS.Referer = `${MAIN_URL}/`;
+      }
+
+      const html = await response.text();
+      const $ = cheerio.load(html);
+      const results = [];
+
+      $(".posts-wrapper article, .nv-index-posts article").each((i, el) => {
+        const titleEl = $(el).find("h2.entry-title a");
+        const title = titleEl.text().trim();
+        const href = titleEl.attr("href");
+        if (title && href) {
+          results.push({ title, href });
         }
-      } catch (e) {
-        // Ignore URL parsing errors
+      });
+
+      if (results.length > 0 || html.includes('nothing found') || html.includes('no results')) {
+        return results;
       }
+      
+      console.log(`[Tamilblasters] No results on ${domain}, but no error. Continuing...`);
+    } catch (error) {
+      console.error(`[Tamilblasters] Search error on ${domain}:`, error.message);
+      lastError = error;
     }
-
-    const html = await response.text();
-    const $ = cheerio.load(html);
-    const results = [];
-
-    $(".posts-wrapper article, .nv-index-posts article").each((i, el) => {
-      const titleEl = $(el).find("h2.entry-title a");
-      const title = titleEl.text().trim();
-      const href = titleEl.attr("href");
-      if (title && href) {
-        results.push({ title, href });
-      }
-    });
-
-    return results;
-  } catch (error) {
-    console.error("[Tamilblasters] Search error:", error.message);
-    return [];
   }
+
+  return [];
 }
 
 // =================================================================================
@@ -444,7 +490,12 @@ async function extractFromGenericEmbed(embedUrl, hostName) {
       }
       
       // Add known fallback mirrors if dynamic extraction fails
-      const fallbackMirrors = ['yuguaab.com', 'cavanhabg.com', 'vibuxer.com', 'yuguaab.pro', 'streamtape.com', 'doedly.com'];
+      const fallbackMirrors = [
+        'yuguaab.com', 'cavanhabg.com', 'vibuxer.com', 'yuguaab.pro', 
+        'streamtape.com', 'doedly.com', 'voe.sx', 'vidhide.com', 
+        'vidoza.net', 'upstream.to', 'dood.li', 'dood.la', 
+        'dood.so', 'dood.to', 'waaw.to', 'mixdrop.co'
+      ];
       
       let mirrors = Array.from(foundMirrors);
       if (mirrors.length === 0) {
@@ -583,6 +634,19 @@ async function getStreams(tmdbId, mediaType = 'movie', season = null, episode = 
         year: null
       };
     }
+
+    // Dynamic Domain Discovery
+    try {
+      const workingDomain = await getReadyDomain();
+      if (workingDomain !== MAIN_URL) {
+        console.log(`[Tamilblasters] Switching MAIN_URL: ${MAIN_URL} -> ${workingDomain}`);
+        MAIN_URL = workingDomain;
+        HEADERS.Referer = `${MAIN_URL}/`;
+      }
+    } catch (e) {
+      console.log(`[Tamilblasters] Domain discovery failed: ${e.message}`);
+    }
+
     const searchResults = await search(mediaInfo.title);
 
     const allMatches = findAllTitleMatches(mediaInfo, searchResults);
@@ -637,7 +701,13 @@ async function getStreams(tmdbId, mediaType = 'movie', season = null, episode = 
           baseLanguage = matchTitle.split(yearMatch[0])[1]?.trim() || "Original";
         }
 
-        $("iframe").each((i, el) => {
+        // Use a more robust selector that handles uppercase tags if necessary
+        let iframes = $("iframe");
+        if (iframes.length === 0) {
+          iframes = $("*").filter((i, el) => el.tagName && el.tagName.toLowerCase() === 'iframe');
+        }
+
+        iframes.each((i, el) => {
           let streamurl = $(el).attr("src");
           if (!streamurl || streamurl.includes("google.com") || streamurl.includes("youtube.com"))
             return;

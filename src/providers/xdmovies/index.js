@@ -1,23 +1,94 @@
 // ================= XDmovies =================
 const cheerio = require('cheerio-without-node-native');
 
-const XDMOVIES_API = "https://xdmovies.site";
-
-// TMDB API Configuration
-const TMDB_API_KEY = '1b3113663c9004682ed61086cf967c44';
-const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
-
-const XDMOVIES_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
-    "Referer": `${XDMOVIES_API}/`,
-    "x-requested-with": "XMLHttpRequest",
-    "x-auth-token": atob("NzI5N3Nra2loa2Fqd25zZ2FrbGFrc2h1d2Q=")
-};
+const XDMOVIES_API = "https://new.xdmovies.wtf";
 
 const HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
     "Referer": `${XDMOVIES_API}/`,
 };
+
+async function fetchWithTimeout(url, options = {}, timeout = 10000) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    try {
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(id);
+        return response;
+    } catch (error) {
+        clearTimeout(id);
+        throw error;
+    }
+}
+
+/**
+ * Search for movie on XDmovies by trying guessed URLs
+ */
+async function searchMovie(query, year = null) {
+    const results = [];
+    const slug = query.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+    
+    // Try different URL patterns based on site structure
+    const patterns = [];
+    
+    // Primary patterns with year
+    if (year) {
+        patterns.push(
+            `/movies/${slug}-${year}-2160p-1080p-hindi-english-download`,
+            `/movies/${slug}-${year}-1080p-hindi-english-download`,
+            `/movies/${slug}-${year}-hindi-english-download`,
+            `/movies/${slug}-${year}-hindi-download`,
+            `/movies/${slug}-${year}-tamil-download`
+        );
+    }
+    
+    // Try without year
+    patterns.push(
+        `/movies/${slug}-*`,
+        `/movies/${slug}`,
+        `/movies/${slug}`,
+        `/movies/${slug}`,
+        `/movies/${slug}`
+    );
+    
+    for (const pattern of patterns) {
+        const url = XDMOVIES_API + pattern;
+        try {
+            const response = await fetchWithTimeout(url, { headers: HEADERS }, 5000);
+            if (response.ok) {
+                const html = await response.text();
+                if (!html.includes('404') && !html.includes('Page not found')) {
+                    results.push({
+                        title: query + (year ? ` (${year})` : ''),
+                        url: url
+                    });
+                    break;
+                }
+            }
+        } catch (e) { }
+    }
+    
+    // If no direct match, try homepage for recent movies
+    if (results.length === 0) {
+        try {
+            const response = await fetchWithTimeout(XDMOVIES_API, { headers: HEADERS }, 8000);
+            const html = await response.text();
+            const $ = cheerio.load(html);
+            
+            $('a[href*="/movies/"]').each((i, el) => {
+                const href = $(el).attr('href');
+                if (href && href.includes('/movies/') && !href.includes('download')) {
+                    const text = $(el).text().trim();
+                    if (text && text.length > 3) {
+                        results.push({ title: text, url: XDMOVIES_API + href });
+                    }
+                }
+            });
+        } catch (e) { }
+    }
+    
+    return results;
+}
 
 
 function formatBytes(bytes) {
@@ -671,171 +742,91 @@ function extractCodec(text) {
 
 // ================= MAIN =================
 
-function getStreams(tmdbId, mediaType = 'movie', season = null, episode = null) {
-    return getTMDBDetails(tmdbId, mediaType)
-        .then(mediaInfo => {
-            if (!mediaInfo?.title) return [];
-
-            // ---------- SEARCH ----------
-            return fetch(
-                `${XDMOVIES_API}/php/search_api.php?query=${encodeURIComponent(mediaInfo.title)}&fuzzy=true`,
-                { headers: XDMOVIES_HEADERS }
-            )
-                .then(r => r.ok ? r.json() : [])
-                .then(searchData => {
-                    if (!Array.isArray(searchData)) return [];
-
-                    const matched = searchData.find(
-                        x => Number(x.tmdb_id) === Number(tmdbId)
-                    );
-                    if (!matched?.path) return [];
-
-                    // Extract metadata from site title
-                    let metadata = '';
-                    const siteTitle = matched.title || '';
-                    const metaParts = [];
-                    if (/multi\s*audio/i.test(siteTitle)) metaParts.push('Multi Audio');
-                    else if (/dual\s*audio/i.test(siteTitle)) metaParts.push('Dual Audio');
-
-                    if (/esub/i.test(siteTitle)) metaParts.push('ESub');
-                    else if (/sub/i.test(siteTitle)) metaParts.push('Sub');
-
-                    if (metaParts.length > 0) metadata = metaParts.join(' + ');
-
-                    // ---------- DETAILS PAGE ----------
-                    return fetch(XDMOVIES_API + matched.path, {
-                        headers: XDMOVIES_HEADERS
-                    })
-                        .then(r => r.text())
-                        .then(html => {
-                            const $ = cheerio.load(html);
-                            const collectedUrls = [];
-
-                            const resolveRedirect = (url) =>
-                                fetch(url, {
-                                    headers: XDMOVIES_HEADERS,
-                                    redirect: 'manual'
-                                })
-                                    .then(res => {
-                                        if (res.status >= 300 && res.status < 400) {
-                                            const loc = res.headers.get('location');
-                                            return loc ? new URL(loc, url).toString() : null;
-                                        }
-                                        return url;
-                                    })
-                                    .catch(() => null);
-
-                            // ===== MOVIE =====
-                            if (!season) {
-                                const rawLinks = $('div.download-item a[href]')
-                                    .map((_, a) => $(a).attr('href'))
-                                    .get();
-
-                                return Promise.all(
-                                    rawLinks.map(raw =>
-                                        resolveRedirect(raw).then(finalUrl => {
-                                            if (finalUrl) collectedUrls.push(finalUrl);
-                                        })
-                                    )
-                                ).then(() => collectedUrls);
-                            }
-
-                            // ===== TV =====
-                            const epRegex = new RegExp(
-                                `S${String(season).padStart(2, '0')}E${String(episode).padStart(2, '0')}`,
-                                'i'
-                            );
-
-                            const jobs = [];
-
-                            $('div.episode-card').each((_, card) => {
-                                const $card = $(card);
-                                const title = $card.find('.episode-title').text() || '';
-                                if (!epRegex.test(title)) return;
-
-                                $card.find('a[href]').each((_, a) => {
-                                    const raw = $(a).attr('href');
-                                    if (!raw) return;
-
-                                    jobs.push(
-                                        resolveRedirect(raw).then(finalUrl => {
-                                            if (finalUrl) collectedUrls.push(finalUrl);
-                                        })
-                                    );
-                                });
-                            });
-
-                            return Promise.all(jobs).then(() => collectedUrls);
-                        })
-                        .then(collectedUrls => {
-                            if (!collectedUrls.length) return [];
-
-                            // ---------- EXTRACTION ----------
-                            return Promise.all(
-                                collectedUrls.map(url =>
-                                    loadExtractor(url, XDMOVIES_API)
-                                        .catch(() => [])
-                                )
-                            ).then(results => {
-                                const flat = results.flat();
-
-                                // Deduplicate FINAL streams only
-                                const seen = new Set();
-
-                                return flat.filter(link => {
-                                    if (!link || !link.url) return false;
-                                    if (seen.has(link.url)) return false;
-                                    seen.add(link.url);
-                                    return true;
-                                }).map(link => {
-                                    let title;
-                                    if (mediaType === 'tv') {
-                                        title =
-                                            `${mediaInfo.title} ` +
-                                            `S${String(season).padStart(2, '0')}` +
-                                            `E${String(episode).padStart(2, '0')}`;
-                                    } else if (mediaInfo.year) {
-                                        title = `${mediaInfo.title} (${mediaInfo.year})`;
-                                    } else {
-                                        title = mediaInfo.title;
-                                    }
-
-                                    let quality = 'Unknown';
-                                    if (link.quality >= 2160) quality = '2160p';
-                                    else if (link.quality >= 1440) quality = '1440p';
-                                    else if (link.quality >= 1080) quality = '1080p';
-                                    else if (link.quality >= 720) quality = '720p';
-                                    else if (link.quality >= 480) quality = '480p';
-                                    else if (link.quality >= 360) quality = '360p';
-
-                                    const serverName = extractServerName(link.source);
-                                    const formattedSize = formatBytes(link.size);
-                                    const stream = {
-                                        name: `XDmovies ${serverName}`,
-                                        title: formatTitle(mediaInfo, serverName, quality, season, episode, formattedSize, metadata),
-                                        url: link.url,
-                                        quality,
-                                        size: formattedSize,
-                                        headers: link.headers,
-                                        provider: 'XDmovies'
-                                    };
-
-                                    return isLinkWorking(stream.url, stream.headers).then(working => {
-                                        return working ? stream : null;
-                                    });
-                                });
-                            }).then(streamPromises => {
-                                return Promise.all(streamPromises).then(finalStreams => {
-                                    return finalStreams.filter(Boolean);
-                                });
-                            });
-                        });
+async function getStreams(tmdbId, mediaType = 'movie', season = null, episode = null) {
+    console.log(`[XDmovies] Processing ${mediaType} ${tmdbId}`);
+    
+    let mediaInfo;
+    let searchQuery = tmdbId;
+    
+    // Try to get TMDB details if numeric ID
+    const isNumericId = /^\d+$/.test(tmdbId);
+    if (isNumericId) {
+        try {
+            mediaInfo = await getTMDBDetails(tmdbId, mediaType);
+            if (mediaInfo?.title) {
+                searchQuery = mediaInfo.title;
+            }
+        } catch (e) {
+            console.log(`[XDmovies] TMDB fetch failed, using "${tmdbId}" as search query`);
+        }
+    }
+    
+    // Extract year if present
+    let year = null;
+    const yearMatch = searchQuery.match(/\b(19|20)\d{2}\b/);
+    if (yearMatch) {
+        year = yearMatch[0];
+        searchQuery = searchQuery.replace(year, '').trim();
+    }
+    
+    console.log(`[XDmovies] Searching for: ${searchQuery} (year: ${year})`);
+    
+    // Search for movie
+    const searchResults = await searchMovie(searchQuery, year);
+    
+    if (searchResults.length === 0) {
+        console.warn("[XDmovies] No search results found");
+        return [];
+    }
+    
+    const movieUrl = searchResults[0].url;
+    console.log(`[XDmovies] Found page: ${movieUrl}`);
+    
+    // Fetch movie page
+    try {
+        const response = await fetchWithTimeout(movieUrl, { headers: HEADERS }, 10000);
+        const html = await response.text();
+        const $ = cheerio.load(html);
+        
+        const streams = [];
+        
+        // Find download/streaming links
+        $('a[href]').each((i, el) => {
+            const href = $(el).attr('href');
+            const text = $(el).text().trim();
+            
+            if (!href) return;
+            
+            // Look for embed or direct links
+            if (href.includes('embed') || href.includes('stream') || href.includes('player') || 
+                href.includes('vidhide') || href.includes('streamtape') || href.includes('doodstream')) {
+                streams.push({
+                    url: href,
+                    quality: text.match(/\d{3,4}p/i)?.[0] || 'Unknown',
+                    source: text || 'XDmovies'
                 });
-        })
-        .catch(err => {
-            console.error('[XDmovies] getStreams failed:', err.message);
-            return [];
+            }
         });
+        
+        // Also check for iframe src
+        $('iframe[src]').each((i, el) => {
+            const src = $(el).attr('src');
+            if (src) {
+                streams.push({
+                    url: src,
+                    quality: 'Unknown',
+                    source: 'XDmovies'
+                });
+            }
+        });
+        
+        console.log(`[XDmovies] Found ${streams.length} stream URLs`);
+        return streams;
+        
+    } catch (e) {
+        console.error("[XDmovies] Error fetching movie page:", e.message);
+        return [];
+    }
 }
 
 
