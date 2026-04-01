@@ -8,12 +8,51 @@ const TMDB_API_KEY = '1b3113663c9004682ed61086cf967c44';
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
 // TamilMV Configuration
-let MAIN_URL = "https://www.1tamilmv.immo";
+const POTENTIAL_DOMAINS = [
+  "https://www.1tamilmv.cymru",
+  "https://www.1tamilmv.immo",
+  "https://www.1tamilmv.pm",
+  "https://www.1tamilmv.org",
+  "https://www.1tamilmv.lat",
+  "https://www.1tamilmv.vin",
+  "https://www.1tamilmv.st",
+];
+
+let MAIN_URL = POTENTIAL_DOMAINS[0];
 
 const HEADERS = {
   "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
   "Referer": `${MAIN_URL}/`,
 };
+
+/**
+ * Finds a working TamilMV domain
+ */
+async function getReadyDomain() {
+  console.log("[TamilMV] Checking for a working domain...");
+  
+  const checks = POTENTIAL_DOMAINS.map(async (domain) => {
+    try {
+      const response = await fetchWithTimeout(domain, { method: 'HEAD' }, 5000);
+      if (response.ok) return domain;
+      const getResponse = await fetchWithTimeout(domain, { method: 'GET' }, 5000);
+      if (getResponse.ok) return domain;
+    } catch (e) {
+      // Domain unreachable
+    }
+    return null;
+  });
+
+  for (const check of checks) {
+    const workingDomain = await check;
+    if (workingDomain) {
+      console.log(`[TamilMV] Found working domain: ${workingDomain}`);
+      return workingDomain;
+    }
+  }
+
+  return POTENTIAL_DOMAINS[0];
+}
 
 /**
  * Fetch with timeout to prevent hanging requests
@@ -159,7 +198,7 @@ async function extractDirectStream(embedUrl) {
     // Try different extractors based on hostname
     if (hostname.includes('hglink') || hostname.includes('hubglink')) {
       return await extractFromGenericEmbed(embedUrl, 'hglink');
-    } else if (hostname.includes('luluvid')) {
+    } else if (hostname.includes('luluvid') || hostname.includes('luluvdo')) {
       return await extractFromGenericEmbed(embedUrl, 'luluvid');
     } else if (hostname.includes('wishonly')) {
       return await extractFromGenericEmbed(embedUrl, 'wishonly');
@@ -169,7 +208,13 @@ async function extractDirectStream(embedUrl) {
       return await extractFromGenericEmbed(embedUrl, 'vidnest');
     } else if (hostname.includes('strmup')) {
       return await extractFromStrmup(embedUrl);
+    } else if (hostname.includes('gdriveplayer') || hostname.includes('pixel')) {
+       return await extractFromGenericEmbed(embedUrl, 'generic');
     }
+
+    // Try generic extractor for any other unknown host
+    console.log(`[TamilMV] Trying generic extractor for unknown host: ${hostname}`);
+    return await extractFromGenericEmbed(embedUrl, hostname);
 
     // If no specific extractor, return null (don't show embed URL)
     console.log(`[TamilMV] No extractor for ${hostname}, skipping`);
@@ -360,45 +405,48 @@ async function searchTamilMV(query, year = null) {
   const results = [];
   const slugBase = query.toLowerCase().replace(/[^a-z0-9]/g, '-');
   
-  // Try forum search URL
-  const searchUrls = [
-    `${MAIN_URL}/index.php?/forums/tags/`,
-    `${MAIN_URL}/index.php?/forums/filter/`,
-  ];
-  
-  // Also try guessing direct movie URL
-  const guessUrls = [
-    `${MAIN_URL}/index.php?/forums/topic/${slugBase}-${year || ''}/`,
-    `${MAIN_URL}/index.php?/forums/topic/${slugBase}/`,
-  ];
-  
-  // Try search page
-  try {
-    const searchUrl = `${MAIN_URL}/search/?q=${encodeURIComponent(query)}`;
-    console.log(`[TamilMV] Trying search: ${searchUrl}`);
-    const response = await fetchWithTimeout(searchUrl, { headers: HEADERS }, 8000);
-    if (response.ok) {
-      const html = await response.text();
-      const $ = cheerio.load(html);
+  let domainsToTry = [MAIN_URL, ...POTENTIAL_DOMAINS.filter(d => d !== MAIN_URL)];
+
+  for (const domain of domainsToTry) {
+    try {
+      const searchUrl = `${domain}/search/?q=${encodeURIComponent(query)}`;
+      console.log(`[TamilMV] Trying search on ${domain}: ${searchUrl}`);
+      const response = await fetchWithTimeout(searchUrl, { headers: { ...HEADERS, Referer: `${domain}/` } }, 8000);
       
-      // Look for topic links in search results
-      $('a[href*="/forums/topic/"]').each((i, el) => {
-        const href = $(el).attr('href');
-        const text = $(el).text().trim();
-        
-        if (href && text && text.length > 5 && !text.includes('login') && !text.includes('register')) {
-          const fullUrl = href.startsWith('http') ? href : MAIN_URL + href;
-          if (!results.some(r => r.href === fullUrl)) {
-            results.push({ title: text, url: fullUrl });
-          }
+      if (response.ok) {
+        // Update MAIN_URL if we're using a different one
+        if (domain !== MAIN_URL) {
+          console.log(`[TamilMV] Rotating to working domain: ${domain}`);
+          MAIN_URL = domain;
+          HEADERS.Referer = `${MAIN_URL}/`;
         }
-      });
+
+        const html = await response.text();
+        const $ = cheerio.load(html);
+        
+        // Look for topic links in search results
+        $('a[href*="/forums/topic/"]').each((i, el) => {
+          const href = $(el).attr('href');
+          const text = $(el).text().trim();
+          
+          if (href && text && text.length > 5 && !text.includes('login') && !text.includes('register')) {
+            const fullUrl = href.startsWith('http') ? href : domain + href;
+            if (!results.some(r => r.href === fullUrl)) {
+              results.push({ title: text, url: fullUrl });
+            }
+          }
+        });
+
+        if (results.length > 0 || html.includes('no results found')) {
+          return results;
+        }
+      }
+    } catch (e) {
+      console.log(`[TamilMV] Search failed on ${domain}: ${e.message}`);
     }
-  } catch (e) {
-    console.log(`[TamilMV] Search failed: ${e.message}`);
   }
   
-  // Try homepage as fallback
+  // Try homepage as fallback for last successful MAIN_URL
   if (results.length === 0) {
     try {
       const homeResponse = await fetchWithTimeout(MAIN_URL, { headers: HEADERS }, 8000);
@@ -481,6 +529,18 @@ async function getStreams(tmdbId, mediaType = 'movie', season = null, episode = 
         mediaInfo.year = yearMatch[0];
         mediaInfo.title = tmdbId.replace(yearMatch[0], '').trim();
       }
+    }
+
+    // Dynamic Domain Discovery
+    try {
+      const workingDomain = await getReadyDomain();
+      if (workingDomain !== MAIN_URL) {
+        console.log(`[TamilMV] Switching MAIN_URL: ${MAIN_URL} -> ${workingDomain}`);
+        MAIN_URL = workingDomain;
+        HEADERS.Referer = `${MAIN_URL}/`;
+      }
+    } catch (e) {
+      console.log(`[TamilMV] Domain discovery failed: ${e.message}`);
     }
 
     console.log(`[TamilMV] Searching for: ${mediaInfo.title} (${mediaInfo.year})`);
