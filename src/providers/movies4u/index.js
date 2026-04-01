@@ -8,7 +8,7 @@ const TMDB_API_KEY = '1b3113663c9004682ed61086cf967c44';
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
 // Movies4u Configuration
-const MAIN_URL = "https://movies4u.claims";
+const MAIN_URL = "https://movies4u.rs";
 const M4UPLAY_BASE = "https://m4uplay.store";
 
 const HEADERS = {
@@ -20,23 +20,12 @@ const HEADERS = {
  * Fetch with timeout to prevent hanging requests
  */
 async function fetchWithTimeout(url, options = {}, timeout = 10000) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-    try {
-        const response = await fetch(url, {
-            ...options,
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-        return response;
-    } catch (error) {
-        clearTimeout(timeoutId);
-        if (error.name === 'AbortError') {
-            throw new Error(`Request timeout after ${timeout}ms`);
-        }
-        throw error;
-    }
+    return Promise.race([
+        fetch(url, { ...options }),
+        new Promise((_, reject) =>
+            setTimeout(() => reject(new Error(`Timeout after ${timeout}ms`)), timeout)
+        )
+    ]);
 }
 
 /**
@@ -434,16 +423,18 @@ async function extractWatchLinks(movieUrl) {
         const $ = cheerio.load(html);
         const watchLinks = [];
 
-        $('a.btn.btn-zip').each((i, el) => {
+        $('a').each((i, el) => {
             const href = $(el).attr('href');
-            const text = $(el).text().trim();
-            if (href && (href.includes('m4uplay.com') || href.includes('m4uplay.store') || href.includes('m4uplay.'))) {
+            const button = $(el).find('.dwd-button');
+            const text = button.length > 0 ? button.text().trim() : $(el).text().trim();
+            
+            if (href && (href.includes('m4uplay') || href.includes('mdrive.ink') || href.includes('filepress'))) {
                 watchLinks.push({
                     url: href,
                     quality: text.includes('1080p') ? '1080p' :
                         text.includes('720p') ? '720p' :
-                            text.includes('480p') ? '480p' :
-                                text.includes('4K') || text.includes('2160p') ? '4K' : 'Unknown',
+                        text.includes('480p') ? '480p' :
+                        text.includes('4K') || text.includes('2160p') ? '4K' : 'HD',
                     label: text
                 });
             }
@@ -488,7 +479,7 @@ async function searchMovies(query) {
         const $ = cheerio.load(html);
         const results = [];
 
-        $('h3.entry-title a').each((i, el) => {
+        $('.entry-title a').each((i, el) => {
             const title = $(el).text().trim();
             const url = $(el).attr('href');
             if (title && url) results.push({ title, url });
