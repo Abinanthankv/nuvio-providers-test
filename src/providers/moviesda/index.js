@@ -8,42 +8,64 @@ const TMDB_API_KEY = '1b3113663c9004682ed61086cf967c44';
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
 // Moviesda Configuration
-let MAIN_URL = "https://moviesda18.com";
+const POTENTIAL_DOMAINS = [
+    "https://moviesda18.com",
+    "https://moviesda17.com",
+    "https://moviesda16.com",
+    "https://moviesda15.com",
+    "https://moviesda.com.co",
+];
+
+let MAIN_URL = POTENTIAL_DOMAINS[0];
 
 const HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
     "Referer": `${MAIN_URL}/`,
 };
 
+/**
+ * Finds a working Moviesda domain
+ */
+async function getReadyDomain() {
+    console.log("[Moviesda] Checking for a working domain...");
+    
+    const checks = POTENTIAL_DOMAINS.map(async (domain) => {
+        try {
+            const response = await fetchWithTimeout(domain, { method: 'HEAD' }, 5000);
+            if (response.ok) return domain;
+            const getResponse = await fetchWithTimeout(domain, { method: 'GET' }, 5000);
+            if (getResponse.ok) return domain;
+        } catch (e) {
+            // Domain unreachable
+        }
+        return null;
+    });
+
+    for (const check of checks) {
+        const workingDomain = await check;
+        if (workingDomain) {
+            console.log(`[Moviesda] Found working domain: ${workingDomain}`);
+            return workingDomain;
+        }
+    }
+
+    return POTENTIAL_DOMAINS[0];
+}
+
 // =================================================================================
 // UTILITY FUNCTIONS
 // =================================================================================
 
 /**
- * Fetch with timeout to prevent hanging requests
- * @param {string} url URL to fetch
- * @param {Object} options Fetch options
- * @param {number} timeout Timeout in milliseconds (default: 10000)
- * @returns {Promise<Response>}
+ * Fetch with timeout using Promise.race for better RN compatibility
  */
 async function fetchWithTimeout(url, options = {}, timeout = 10000) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-    try {
-        const response = await fetch(url, {
-            ...options,
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-        return response;
-    } catch (error) {
-        clearTimeout(timeoutId);
-        if (error.name === 'AbortError') {
-            throw new Error(`Request timeout after ${timeout}ms`);
-        }
-        throw error;
-    }
+    return Promise.race([
+        fetch(url, { ...options }),
+        new Promise((_, reject) =>
+            setTimeout(() => reject(new Error(`Timeout after ${timeout}ms`)), timeout)
+        )
+    ]);
 }
 
 /**
@@ -492,7 +514,7 @@ async function extractFromOnestream(embedUrl) {
                 ...HEADERS,
                 'Referer': MAIN_URL
             }
-        }, 8000);
+        }, 12000); // Increased timeout for onestream
         const html = await response.text();
         const $ = cheerio.load(html);
 
@@ -523,6 +545,18 @@ async function extractFromOnestream(embedUrl) {
         if (mp4Match) {
             console.log(`[Moviesda] Found mp4 URL: ${mp4Match[0]}`);
             return mp4Match[0];
+        }
+
+        // Check for Packer obfuscation (some onestream mirrors use it)
+        const packerMatch = html.match(/eval\(function\(p,a,c,k,e,d\)\{.*?\}\s*\((.*)\)\s*\)/s);
+        if (packerMatch) {
+            const rawArgs = packerMatch[1].trim();
+            const pMatch = rawArgs.match(/^'(.*)',\s*(\d+),\s*(\d+),\s*'(.*?)'\.split\(/s);
+            if (pMatch) {
+                const unpacked = unpack(pMatch[1], parseInt(pMatch[2]), parseInt(pMatch[3]), pMatch[4].split('|'));
+                const m3u8MatchUnpacked = unpacked.match(/https?:\/\/[^\s"']+\.m3u8[^\s"']*/i);
+                if (m3u8MatchUnpacked) return m3u8MatchUnpacked[0];
+            }
         }
 
         console.log(`[Moviesda] No direct URL found in onestream page`);
@@ -748,7 +782,7 @@ async function extractFinalDownloadUrl(downloadPageUrl) {
                 const fileIdMatch = downloadUrl.match(/\/file\/(\d+)/);
                 if (fileIdMatch) {
                     const fileId = fileIdMatch[1];
-                    const streamUrl = `https://play.onestream.watch/stream/page/${fileId}`;
+                    const streamUrl = `https://play.onestream.today/stream/page/${fileId}`;
                     console.log(`[Moviesda] Converted to onestream URL: ${streamUrl}`);
                     // Return as object to indicate it needs extraction
                     return { url: streamUrl, needsExtraction: true };
@@ -782,7 +816,6 @@ async function extractFinalDownloadUrl(downloadPageUrl) {
  */
 async function getStreams(tmdbId, mediaType = 'movie', season = null, episode = null) {
     console.log(`[Moviesda] Processing ${mediaType} ${tmdbId}`);
-
     try {
         let mediaInfo;
 
@@ -809,6 +842,18 @@ async function getStreams(tmdbId, mediaType = 'movie', season = null, episode = 
                 console.log(`[Moviesda] TMDB search failed: ${error.message}`);
                 mediaInfo = { title: tmdbId, year: null };
             }
+        }
+
+        // Dynamic Domain Discovery
+        try {
+            const workingDomain = await getReadyDomain();
+            if (workingDomain !== MAIN_URL) {
+                console.log(`[Moviesda] Switching MAIN_URL: ${MAIN_URL} -> ${workingDomain}`);
+                MAIN_URL = workingDomain;
+                HEADERS.Referer = `${MAIN_URL}/`;
+            }
+        } catch (e) {
+            console.log(`[Moviesda] Domain discovery failed: ${e.message}`);
         }
 
         console.log(`[Moviesda] Looking for: "${mediaInfo.title}" (${mediaInfo.year || 'N/A'})`);
@@ -1005,7 +1050,7 @@ async function getStreams(tmdbId, mediaType = 'movie', season = null, episode = 
                 name: "Moviesda",
                 title: formatStreamTitle(mediaInfo, stream),
                 url: finalUrl,
-                quality: stream.quality,
+                quality: stream.quality || "Unknown",
                 headers: {
                     "Referer": MAIN_URL,
                     "User-Agent": HEADERS["User-Agent"]

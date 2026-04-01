@@ -657,7 +657,7 @@ async function extractFinalDownloadUrl(downloadPageUrl) {
             const text = $(el).text().trim().toLowerCase();
 
             if (href && !href.includes('isaidub.love') && !href.startsWith('#')) {
-                if (text.includes('download') || text.includes('server') || href.includes('dubmv.top') || href.includes('onestream.watch')) {
+                if (text.includes('download') || text.includes('server') || href.includes('dubmv.top') || href.includes('onestream.today')) {
                     const fullUrl = href.startsWith('http') ? href : `https:${href}`;
                     downloadLinks.push(fullUrl);
                 }
@@ -667,7 +667,7 @@ async function extractFinalDownloadUrl(downloadPageUrl) {
         if (downloadLinks.length > 0) {
             const downloadUrl = downloadLinks[0];
             const needsExtraction = downloadUrl.includes('dubmv.top/') || 
-                downloadUrl.includes('onestream.watch/') || 
+                downloadUrl.includes('onestream.today/') || 
                 downloadUrl.includes('uptodub.ch/') ||
                 downloadUrl.includes('dubpage.xyz/');
             return { url: downloadUrl, needsExtraction, size };
