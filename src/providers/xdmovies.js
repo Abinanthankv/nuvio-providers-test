@@ -1,5 +1,222 @@
 /**
  * xdmovies - Built from src/xdmovies/
- * Generated: 2026-04-01T16:15:47.636Z
+ * Generated: 2026-07-03T14:01:24.566Z
  */
-var y=Object.defineProperty,E=Object.defineProperties;var P=Object.getOwnPropertyDescriptors;var $=Object.getOwnPropertySymbols;var B=Object.prototype.hasOwnProperty,M=Object.prototype.propertyIsEnumerable;var C=(n,e,r)=>e in n?y(n,e,{enumerable:!0,configurable:!0,writable:!0,value:r}):n[e]=r,D=(n,e)=>{for(var r in e||(e={}))B.call(e,r)&&C(n,r,e[r]);if($)for(var r of $(e))M.call(e,r)&&C(n,r,e[r]);return n},k=(n,e)=>E(n,P(e));var v=(n,e,r)=>new Promise((c,t)=>{var o=i=>{try{s(r.next(i))}catch(l){t(l)}},u=i=>{try{s(r.throw(i))}catch(l){t(l)}},s=i=>i.done?c(i.value):Promise.resolve(i.value).then(o,u);s((r=r.apply(n,e)).next())});var U=require("cheerio-without-node-native"),b="https://new.xdmovies.wtf",x={"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",Referer:`${b}/`};function g(c){return v(this,arguments,function*(n,e={},r=1e4){let t=new AbortController,o=setTimeout(()=>t.abort(),r);try{let u=yield fetch(n,k(D({},e),{signal:t.signal}));return clearTimeout(o),u}catch(u){throw clearTimeout(o),u}})}function z(n,e=null){return v(this,null,function*(){let r=[],c=n.toLowerCase().replace(/[^a-z0-9]/g,"-").replace(/-+/g,"-"),t=[];e&&t.push(`/movies/${c}-${e}-2160p-1080p-hindi-english-download`,`/movies/${c}-${e}-1080p-hindi-english-download`,`/movies/${c}-${e}-hindi-english-download`,`/movies/${c}-${e}-hindi-download`,`/movies/${c}-${e}-tamil-download`),t.push(`/movies/${c}-*`,`/movies/${c}`,`/movies/${c}`,`/movies/${c}`,`/movies/${c}`);for(let o of t){let u=b+o;try{let s=yield g(u,{headers:x},5e3);if(s.ok){let i=yield s.text();if(!i.includes("404")&&!i.includes("Page not found")){r.push({title:n+(e?` (${e})`:""),url:u});break}}}catch(s){}}if(r.length===0)try{let u=yield(yield g(b,{headers:x},8e3)).text(),s=U.load(u);s('a[href*="/movies/"]').each((i,l)=>{let h=s(l).attr("href");if(h&&h.includes("/movies/")&&!h.includes("download")){let d=s(l).text().trim();d&&d.length>3&&r.push({title:d,url:b+h})}})}catch(o){}return r})}function R(n,e){let r=e==="tv"?"tv":"movie",c=`${TMDB_BASE_URL}/${r}/${n}?api_key=${TMDB_API_KEY}&append_to_response=external_ids`;return fetch(c,{method:"GET",headers:{Accept:"application/json","User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}}).then(function(t){if(console.error("[TMDB] HTTP status:",t.status),!t.ok)throw new Error(`TMDB API error: ${t.status}`);return t.json()}).then(function(t){var i;let o=e==="tv"?t.name:t.title,u=e==="tv"?t.first_air_date:t.release_date,s=u?parseInt(u.split("-")[0]):null;return{title:o,year:s,imdbId:((i=t.external_ids)==null?void 0:i.imdb_id)||null}})}function L(n,e="movie",r=null,c=null){return v(this,null,function*(){console.log(`[XDmovies] Processing ${e} ${n}`);let t,o=n;if(/^\d+$/.test(n))try{t=yield R(n,e),t!=null&&t.title&&(o=t.title)}catch(d){console.log(`[XDmovies] TMDB fetch failed, using "${n}" as search query`)}let s=null,i=o.match(/\b(19|20)\d{2}\b/);i&&(s=i[0],o=o.replace(s,"").trim()),console.log(`[XDmovies] Searching for: ${o} (year: ${s})`);let l=yield z(o,s);if(l.length===0)return console.warn("[XDmovies] No search results found"),[];let h=l[0].url;console.log(`[XDmovies] Found page: ${h}`);try{let H=yield(yield g(h,{headers:x},1e4)).text(),f=U.load(H),m=[];return f("a[href]").each((T,p)=>{var S;let a=f(p).attr("href"),w=f(p).text().trim();a&&(a.includes("embed")||a.includes("stream")||a.includes("player")||a.includes("vidhide")||a.includes("streamtape")||a.includes("doodstream"))&&m.push({url:a,quality:((S=w.match(/\d{3,4}p/i))==null?void 0:S[0])||"Unknown",source:w||"XDmovies"})}),f("iframe[src]").each((T,p)=>{let a=f(p).attr("src");a&&m.push({url:a,quality:"Unknown",source:"XDmovies"})}),console.log(`[XDmovies] Found ${m.length} stream URLs`),m}catch(d){return console.error("[XDmovies] Error fetching movie page:",d.message),[]}})}typeof module!="undefined"&&module.exports?module.exports={getStreams:L}:global.getStreams={getStreams:L};
+var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __spreadValues = (a, b) => {
+  for (var prop in b || (b = {}))
+    if (__hasOwnProp.call(b, prop))
+      __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b)) {
+      if (__propIsEnum.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    }
+  return a;
+};
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+var __async = (__this, __arguments, generator) => {
+  return new Promise((resolve, reject) => {
+    var fulfilled = (value) => {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var rejected = (value) => {
+      try {
+        step(generator.throw(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    step((generator = generator.apply(__this, __arguments)).next());
+  });
+};
+
+// src/providers/xdmovies/index.js
+var cheerio = require("cheerio-without-node-native");
+var XDMOVIES_API = "https://new.xdmovies.wtf";
+var HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  "Referer": `${XDMOVIES_API}/`
+};
+function fetchWithTimeout(_0) {
+  return __async(this, arguments, function* (url, options = {}, timeout = 1e4) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    try {
+      const response = yield fetch(url, __spreadProps(__spreadValues({}, options), { signal: controller.signal }));
+      clearTimeout(id);
+      return response;
+    } catch (error) {
+      clearTimeout(id);
+      throw error;
+    }
+  });
+}
+function searchMovie(query, year = null) {
+  return __async(this, null, function* () {
+    const results = [];
+    const slug = query.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-");
+    const patterns = [];
+    if (year) {
+      patterns.push(
+        `/movies/${slug}-${year}-2160p-1080p-hindi-english-download`,
+        `/movies/${slug}-${year}-1080p-hindi-english-download`,
+        `/movies/${slug}-${year}-hindi-english-download`,
+        `/movies/${slug}-${year}-hindi-download`,
+        `/movies/${slug}-${year}-tamil-download`
+      );
+    }
+    patterns.push(
+      `/movies/${slug}-*`,
+      `/movies/${slug}`,
+      `/movies/${slug}`,
+      `/movies/${slug}`,
+      `/movies/${slug}`
+    );
+    for (const pattern of patterns) {
+      const url = XDMOVIES_API + pattern;
+      try {
+        const response = yield fetchWithTimeout(url, { headers: HEADERS }, 5e3);
+        if (response.ok) {
+          const html = yield response.text();
+          if (!html.includes("404") && !html.includes("Page not found")) {
+            results.push({
+              title: query + (year ? ` (${year})` : ""),
+              url
+            });
+            break;
+          }
+        }
+      } catch (e) {
+      }
+    }
+    if (results.length === 0) {
+      try {
+        const response = yield fetchWithTimeout(XDMOVIES_API, { headers: HEADERS }, 8e3);
+        const html = yield response.text();
+        const $ = cheerio.load(html);
+        $('a[href*="/movies/"]').each((i, el) => {
+          const href = $(el).attr("href");
+          if (href && href.includes("/movies/") && !href.includes("download")) {
+            const text = $(el).text().trim();
+            if (text && text.length > 3) {
+              results.push({ title: text, url: XDMOVIES_API + href });
+            }
+          }
+        });
+      } catch (e) {
+      }
+    }
+    return results;
+  });
+}
+function getTMDBDetails(tmdbId, mediaType) {
+  const endpoint = mediaType === "tv" ? "tv" : "movie";
+  const url = `${TMDB_BASE_URL}/${endpoint}/${tmdbId}?api_key=${TMDB_API_KEY}&append_to_response=external_ids`;
+  return fetch(url, {
+    method: "GET",
+    headers: {
+      "Accept": "application/json",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    }
+  }).then(function(response) {
+    console.error("[TMDB] HTTP status:", response.status);
+    if (!response.ok) {
+      throw new Error(`TMDB API error: ${response.status}`);
+    }
+    return response.json();
+  }).then(function(data) {
+    var _a;
+    const title = mediaType === "tv" ? data.name : data.title;
+    const releaseDate = mediaType === "tv" ? data.first_air_date : data.release_date;
+    const year = releaseDate ? parseInt(releaseDate.split("-")[0]) : null;
+    return {
+      title,
+      year,
+      imdbId: ((_a = data.external_ids) == null ? void 0 : _a.imdb_id) || null
+    };
+  });
+}
+function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) {
+  return __async(this, null, function* () {
+    console.log(`[XDmovies] Processing ${mediaType} ${tmdbId}`);
+    let mediaInfo;
+    let searchQuery = tmdbId;
+    const isNumericId = /^\d+$/.test(tmdbId);
+    if (isNumericId) {
+      try {
+        mediaInfo = yield getTMDBDetails(tmdbId, mediaType);
+        if (mediaInfo == null ? void 0 : mediaInfo.title) {
+          searchQuery = mediaInfo.title;
+        }
+      } catch (e) {
+        console.log(`[XDmovies] TMDB fetch failed, using "${tmdbId}" as search query`);
+      }
+    }
+    let year = null;
+    const yearMatch = searchQuery.match(/\b(19|20)\d{2}\b/);
+    if (yearMatch) {
+      year = yearMatch[0];
+      searchQuery = searchQuery.replace(year, "").trim();
+    }
+    console.log(`[XDmovies] Searching for: ${searchQuery} (year: ${year})`);
+    const searchResults = yield searchMovie(searchQuery, year);
+    if (searchResults.length === 0) {
+      console.warn("[XDmovies] No search results found");
+      return [];
+    }
+    const movieUrl = searchResults[0].url;
+    console.log(`[XDmovies] Found page: ${movieUrl}`);
+    try {
+      const response = yield fetchWithTimeout(movieUrl, { headers: HEADERS }, 1e4);
+      const html = yield response.text();
+      const $ = cheerio.load(html);
+      const streams = [];
+      $("a[href]").each((i, el) => {
+        var _a;
+        const href = $(el).attr("href");
+        const text = $(el).text().trim();
+        if (!href)
+          return;
+        if (href.includes("embed") || href.includes("stream") || href.includes("player") || href.includes("vidhide") || href.includes("streamtape") || href.includes("doodstream")) {
+          streams.push({
+            url: href,
+            quality: ((_a = text.match(/\d{3,4}p/i)) == null ? void 0 : _a[0]) || "Unknown",
+            source: text || "XDmovies"
+          });
+        }
+      });
+      $("iframe[src]").each((i, el) => {
+        const src = $(el).attr("src");
+        if (src) {
+          streams.push({
+            url: src,
+            quality: "Unknown",
+            source: "XDmovies"
+          });
+        }
+      });
+      console.log(`[XDmovies] Found ${streams.length} stream URLs`);
+      return streams;
+    } catch (e) {
+      console.error("[XDmovies] Error fetching movie page:", e.message);
+      return [];
+    }
+  });
+}
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { getStreams };
+} else {
+  global.getStreams = { getStreams };
+}

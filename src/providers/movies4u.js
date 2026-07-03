@@ -1,11 +1,483 @@
 /**
  * movies4u - Built from src/movies4u/
- * Generated: 2026-04-01T16:15:47.617Z
+ * Generated: 2026-07-03T14:01:24.547Z
  */
-var b=Object.defineProperty,L=Object.defineProperties;var R=Object.getOwnPropertyDescriptors;var x=Object.getOwnPropertySymbols;var I=Object.prototype.hasOwnProperty,C=Object.prototype.propertyIsEnumerable;var S=(e,t,n)=>t in e?b(e,t,{enumerable:!0,configurable:!0,writable:!0,value:n}):e[t]=n,m=(e,t)=>{for(var n in t||(t={}))I.call(t,n)&&S(e,n,t[n]);if(x)for(var n of x(t))C.call(t,n)&&S(e,n,t[n]);return e},v=(e,t)=>L(e,R(t));var d=(e,t,n)=>new Promise((a,o)=>{var r=s=>{try{i(n.next(s))}catch(l){o(l)}},c=s=>{try{i(n.throw(s))}catch(l){o(l)}},i=s=>s.done?a(s.value):Promise.resolve(s.value).then(r,c);i((n=n.apply(e,t)).next())});var N=require("cheerio-without-node-native"),D="1b3113663c9004682ed61086cf967c44",q="https://api.themoviedb.org/3",$="https://movies4u.rs",T="https://m4uplay.store",M={"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",Referer:`${$}/`};function y(a){return d(this,arguments,function*(e,t={},n=1e4){return Promise.race([fetch(e,m({},t)),new Promise((o,r)=>setTimeout(()=>r(new Error(`Timeout after ${n}ms`)),n))])})}function E(e){return e?e.toLowerCase().replace(/[^a-z0-9\s]/g,"").replace(/\s+/g," ").trim():""}function W(e,t){let n=E(e),a=E(t);if(n===a)return 1;if(n.includes(a)||a.includes(n))return .9;let o=new Set(n.split(/\s+/).filter(s=>s.length>2)),r=new Set(a.split(/\s+/).filter(s=>s.length>2));if(o.size===0||r.size===0)return 0;let c=new Set([...o].filter(s=>r.has(s))),i=new Set([...o,...r]);return c.size/i.size}function z(e,t){if(!t||t.length===0)return null;let n=e.title.toLowerCase().replace(/[^a-z0-9]/g,""),a=e.year?parseInt(e.year):null,o=null,r=0;for(let c of t){let i=c.title.toLowerCase().replace(/[^a-z0-9]/g,""),s=W(e.title,c.title),l=i.includes(n)||n.includes(i),u=!a||c.title.includes(a.toString())||c.title.includes((a+1).toString())||c.title.includes((a-1).toString());l&&u&&(s+=.5),s>r&&(r=s,o=c)}return o&&r>.4?(console.log(`[Movies4u] Best title match: "${o.title}" (score: ${r.toFixed(2)})`),o):null}function B(e,t){let n=t.quality||"Unknown",a=e.title||"Unknown",o=t.isMaster||!1,r=e.year||"";if(!r||r==="N/A"){let g=(a+" "+(t.text||"")).match(/\b(19|20)\d{2}\b/);g&&(r=g[0])}let c=t.audioInfo||"",i="UNKNOWN",s=t.text?t.text.match(/(\d+(?:\.\d+)?\s*(?:GB|MB))/i):null;s&&(i=s[1].toUpperCase());let l="UNKNOWN",u=((t.text||"")+" "+(t.url||"")+" "+(t.label||"")).toLowerCase();u.includes("bluray")||u.includes("brrip")?l="BluRay":u.includes("web-dl")?l="WEB-DL":u.includes("webrip")?l="WEBRip":u.includes("hdrip")?l="HDRip":u.includes("dvdrip")?l="DVDRip":u.includes("bdrip")?l="BDRip":u.includes("hdtv")&&(l="HDTV");let f=r?` (${r})`:"",h="UNKNOWN";if(c){let g=c.match(/\[Multi Audio: (.*?)\]/i);if(g)h=g[1].toUpperCase();else{let U=c.match(/\[Audio: (.*?)\]/i);U?h=U[1].toUpperCase():h=c.toUpperCase()}}let p=n,w=l&&l!=="UNKNOWN"?`\u{1F4FA}: ${l}
-`:"",k=i&&i!=="UNKNOWN"?`\u{1F4BE}: ${i} | \u{1F69C}: movies4u
-`:"";return`Movies4u (Instant) (${p})
-${w}\u{1F4FC}: ${a}${f} - ${p}
-${k}\u{1F310}: ${h}`}function K(e,t,n,a){for(;n--;)if(a[n]){let o=n.toString(t);e=e.replace(new RegExp("\\b"+o+"\\b","g"),a[n])}return e}function O(e){return d(this,null,function*(){let t={masterUrl:e,variants:[],audios:[],isMaster:!1};try{console.log(`[Movies4u] Resolving HLS playlist: ${e}`);let n=yield y(e,{headers:v(m({},M),{Referer:T})},5e3);if(!n.ok)return t;let a=yield n.text();if(!a.includes("#EXTM3U"))return t;if(a.includes("#EXT-X-STREAM-INF"))t.isMaster=!0;else if(a.includes("#EXT-X-MEDIA:TYPE=AUDIO")&&!a.includes("#EXT-X-STREAM-INF"))return console.log("[Movies4u] Found audio-only playlist, skipping resolution"),t;let o=a.matchAll(/#EXT-X-MEDIA:TYPE=AUDIO,.*?NAME="([^"]+)"(?:.*?LANGUAGE="([^"]+)")?(?:.*?CHANNELS="([^"]+)")?(?:.*?URI="([^"]+)")?/g);for(let c of o){let i=c[1],s=c[2],l=c[3],u=c[4];if(u&&!u.startsWith("http")&&(u=e.substring(0,e.lastIndexOf("/")+1)+u),l){let h={1:"1.0",2:"2.0",6:"5.1",8:"7.1"}[l]||l;i+=` (${h})`}t.audios.some(f=>f.name===i)||t.audios.push({name:i,language:s||"unknown",uri:u})}let r=a.split(`
-`);for(let c=0;c<r.length;c++){let i=r[c].trim();if(i.includes("#EXT-X-STREAM-INF")){let s="Unknown",l=i.match(/RESOLUTION=(\d+)x(\d+)/i);if(l){let f=parseInt(l[2]);f>=2160?s="4K":f>=1080?s="1080p":f>=720?s="720p":f>=480?s="480p":s=`${f}p`}if(s==="Unknown"){let f=i.match(/NAME="([^"]+)"/i);f&&(s=f[1])}let u=c+1;for(;u<r.length&&(r[u].trim().startsWith("#")||!r[u].trim());)u++;if(u<r.length){let f=r[u].trim();if(f){let h=f;h.startsWith("http")||(h=e.substring(0,e.lastIndexOf("/")+1)+h),t.variants.some(p=>p.url===h)||t.variants.push({url:h,quality:s})}}c=u}}return console.log(`[Movies4u] HLS Summary: ${t.variants.length} qualities, ${t.audios.length} audios found`),t}catch(n){return console.error(`[Movies4u] HLS resolution error: ${n.message}`),t}})}function P(e){return d(this,null,function*(){try{console.log(`[Movies4u] Extracting from m4uplay: ${e}`);let n=yield(yield y(e,{headers:v(m({},M),{Referer:$})},8e3)).text(),a=n.match(new RegExp("eval\\(function\\(p,a,c,k,e,d\\)\\{.*?\\}\\s*\\((.*)\\)\\s*\\)","s")),o=n;if(a)try{let s=a[1].trim().match(new RegExp(`^['"](.*)['"]\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*['"](.*?)['"]\\.split\\(['"]\\|['"]\\)`,"s"));s&&(o+=`
-`+K(s[1],parseInt(s[2]),parseInt(s[3]),s[4].split("|")))}catch(i){}let r=null,c=[/https?:\/\/[^\s"']+\.(?:m3u8|txt)(?:\?[^\s"']*)?/,/["']?(\/(?:stream|3o)\/[^"'\s]+\.(?:m3u8|txt))[^\s"']*/,/["']file["']\s*:\s*["']([^"']+\.(?:m3u8|txt)[^"']*)["']/,/https?:\/\/[^\s"']*master\.txt[^\s"']*/,new RegExp(`["'](?:playlist|sources)["']\\s*:\\s*\\[\\s*\\{[^}]*["']file["']\\s*:\\s*["']([^"']+)["']`,"s"),/([\/a-zA-Z0-9_\-\.]+\/master\.(?:m3u8|txt))/];for(let i of c){let s=o.match(i);if(s){let l=s[1]||s[0];l.startsWith("/")&&(l=T+l),r=l;break}}if(r){if(r.includes("master.")){console.log("[Movies4u] Resolving master playlist...");let i=yield O(r);if(i.isMaster){let s=i.audios.map(h=>h.name),l=s.length>1?` [Multi Audio: ${s.join(", ")}]`:"";s.length>1&&console.log(`[Movies4u] Found multi-audio: ${s.join(", ")}`);let u=i.variants.map(h=>h.quality),f=u.includes("4K")?"4K":u.includes("1080p")?"1080p":u.includes("720p")?"720p":u.includes("480p")?"480p":u[0]||"Unknown";return[{url:i.masterUrl,audios:i.audios,audioInfo:l,quality:f,isMaster:!0}]}}return[{url:r,audios:[],audioInfo:"",quality:"Unknown"}]}return console.log("[Movies4u] Could not extract stream URL from m4uplay embed"),[]}catch(t){return console.error(`[Movies4u] M4UPlay extraction error: ${t.message}`),[]}})}function _(e){return d(this,null,function*(){try{console.log(`[Movies4u] Extracting watch links from: ${e}`);let n=yield(yield y(e,{headers:M},8e3)).text(),a=N.load(n),o=[];return a("a").each((r,c)=>{let i=a(c).attr("href"),s=a(c).find(".dwd-button"),l=s.length>0?s.text().trim():a(c).text().trim();i&&(i.includes("m4uplay")||i.includes("mdrive.ink")||i.includes("filepress"))&&o.push({url:i,quality:l.includes("1080p")?"1080p":l.includes("720p")?"720p":l.includes("480p")?"480p":l.includes("4K")||l.includes("2160p")?"4K":"HD",label:l})}),console.log(`[Movies4u] Found ${o.length} watch links`),o}catch(t){return console.error(`[Movies4u] Error extracting watch links: ${t.message}`),[]}})}function H(e,t){return d(this,null,function*(){let a=`${q}/${t==="movie"?"movie":"tv"}/${e}?api_key=${D}`,o=yield y(a,{},8e3);if(!o.ok)throw new Error(`TMDB error: ${o.status}`);let r=yield o.json();return{title:r.title||r.name,year:(r.release_date||r.first_air_date||"").split("-")[0]}})}function X(e){return d(this,null,function*(){try{let t=`${$}/?s=${encodeURIComponent(e)}`;console.log(`[Movies4u] Searching: ${t}`);let a=yield(yield y(t,{headers:M},8e3)).text(),o=N.load(a),r=[];return o(".entry-title a").each((c,i)=>{let s=o(i).text().trim(),l=o(i).attr("href");s&&l&&r.push({title:s,url:l})}),console.log(`[Movies4u] Found ${r.length} search results`),r}catch(t){return console.error(`[Movies4u] Search error: ${t.message}`),[]}})}function A(e,t="movie",n=null,a=null){return d(this,null,function*(){console.log(`[Movies4u] Processing ${t} ${e}`);try{let o;if(/^\d+$/.test(e))try{o=yield H(e,t)}catch(f){o={title:e,year:null}}else o={title:e,year:null};let c=yield X(o.title);if(c.length===0)return[];let i=z(o,c);if(!i)return[];console.log(`[Movies4u] Found match: ${i.title}`);let s=i.title.match(/\((20\d{2}|19\d{2})\)/);o.title.toLowerCase()===e.toLowerCase()&&(o.title=i.title.split("(")[0].trim(),s&&(o.year=s[1]));let l=yield _(i.url);if(l.length===0)return[];let u=[];for(let f of l){let h=yield P(f.url);for(let p of h){let w=v(m({},p),{quality:p.quality!=="Unknown"?p.quality:f.quality,text:f.label,isMaster:p.isMaster});u.push({name:"Movies4u",title:B(o,w),url:p.url,quality:w.quality,headers:{Referer:"https://m4uplay.store/","User-Agent":M["User-Agent"],Origin:"https://m4uplay.store"},provider:"Movies4u"})}}return console.log(`[Movies4u] Extracted ${u.length} streams`),u}catch(o){return console.error("[Movies4u] getStreams failed:",o.message),[]}})}typeof module!="undefined"&&module.exports?module.exports={getStreams:A}:global.getStreams={getStreams:A};
+var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __spreadValues = (a, b) => {
+  for (var prop in b || (b = {}))
+    if (__hasOwnProp.call(b, prop))
+      __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b)) {
+      if (__propIsEnum.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    }
+  return a;
+};
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+var __async = (__this, __arguments, generator) => {
+  return new Promise((resolve, reject) => {
+    var fulfilled = (value) => {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var rejected = (value) => {
+      try {
+        step(generator.throw(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    step((generator = generator.apply(__this, __arguments)).next());
+  });
+};
+
+// src/providers/movies4u/index.js
+var cheerio = require("cheerio-without-node-native");
+var TMDB_API_KEY = "1b3113663c9004682ed61086cf967c44";
+var TMDB_BASE_URL = "https://api.themoviedb.org/3";
+var MAIN_URL = "https://movies4u.rs";
+var M4UPLAY_BASE = "https://m4uplay.store";
+var HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+  "Referer": `${MAIN_URL}/`
+};
+function fetchWithTimeout(_0) {
+  return __async(this, arguments, function* (url, options = {}, timeout = 1e4) {
+    return Promise.race([
+      fetch(url, __spreadValues({}, options)),
+      new Promise(
+        (_, reject) => setTimeout(() => reject(new Error(`Timeout after ${timeout}ms`)), timeout)
+      )
+    ]);
+  });
+}
+function normalizeTitle(title) {
+  if (!title)
+    return "";
+  return title.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
+}
+function calculateTitleSimilarity(title1, title2) {
+  const norm1 = normalizeTitle(title1);
+  const norm2 = normalizeTitle(title2);
+  if (norm1 === norm2)
+    return 1;
+  if (norm1.includes(norm2) || norm2.includes(norm1))
+    return 0.9;
+  const words1 = new Set(norm1.split(/\s+/).filter((w) => w.length > 2));
+  const words2 = new Set(norm2.split(/\s+/).filter((w) => w.length > 2));
+  if (words1.size === 0 || words2.size === 0)
+    return 0;
+  const intersection = new Set([...words1].filter((w) => words2.has(w)));
+  const union = /* @__PURE__ */ new Set([...words1, ...words2]);
+  return intersection.size / union.size;
+}
+function findBestTitleMatch(mediaInfo, searchResults) {
+  if (!searchResults || searchResults.length === 0)
+    return null;
+  const targetTitle = mediaInfo.title.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const targetYear = mediaInfo.year ? parseInt(mediaInfo.year) : null;
+  let bestMatch = null;
+  let bestScore = 0;
+  for (const result of searchResults) {
+    const normalizedResultTitle = result.title.toLowerCase().replace(/[^a-z0-9]/g, "");
+    let score = calculateTitleSimilarity(mediaInfo.title, result.title);
+    const titleMatch = normalizedResultTitle.includes(targetTitle) || targetTitle.includes(normalizedResultTitle);
+    const yearMatch = !targetYear || result.title.includes(targetYear.toString()) || result.title.includes((targetYear + 1).toString()) || result.title.includes((targetYear - 1).toString());
+    if (titleMatch && yearMatch) {
+      score += 0.5;
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = result;
+    }
+  }
+  if (bestMatch && bestScore > 0.4) {
+    console.log(`[Movies4u] Best title match: "${bestMatch.title}" (score: ${bestScore.toFixed(2)})`);
+    return bestMatch;
+  }
+  return null;
+}
+function formatStreamTitle(mediaInfo, stream) {
+  const quality = stream.quality || "Unknown";
+  const title = mediaInfo.title || "Unknown";
+  const isMaster = stream.isMaster || false;
+  let year = mediaInfo.year || "";
+  if (!year || year === "N/A") {
+    const yearMatch = (title + " " + (stream.text || "")).match(/\b(19|20)\d{2}\b/);
+    if (yearMatch)
+      year = yearMatch[0];
+  }
+  const audioInfo = stream.audioInfo || "";
+  let size = "UNKNOWN";
+  const sizeMatch = stream.text ? stream.text.match(/(\d+(?:\.\d+)?\s*(?:GB|MB))/i) : null;
+  if (sizeMatch)
+    size = sizeMatch[1].toUpperCase();
+  let type = "UNKNOWN";
+  const searchString = ((stream.text || "") + " " + (stream.url || "") + " " + (stream.label || "")).toLowerCase();
+  if (searchString.includes("bluray") || searchString.includes("brrip"))
+    type = "BluRay";
+  else if (searchString.includes("web-dl"))
+    type = "WEB-DL";
+  else if (searchString.includes("webrip"))
+    type = "WEBRip";
+  else if (searchString.includes("hdrip"))
+    type = "HDRip";
+  else if (searchString.includes("dvdrip"))
+    type = "DVDRip";
+  else if (searchString.includes("bdrip"))
+    type = "BDRip";
+  else if (searchString.includes("hdtv"))
+    type = "HDTV";
+  const yearStr = year ? ` (${year})` : "";
+  let lang = "UNKNOWN";
+  if (audioInfo) {
+    const multiMatch = audioInfo.match(/\[Multi Audio: (.*?)\]/i);
+    if (multiMatch) {
+      lang = multiMatch[1].toUpperCase();
+    } else {
+      const singleMatch = audioInfo.match(/\[Audio: (.*?)\]/i);
+      if (singleMatch) {
+        lang = singleMatch[1].toUpperCase();
+      } else {
+        lang = audioInfo.toUpperCase();
+      }
+    }
+  }
+  const displayQuality = quality;
+  const typeLine = type && type !== "UNKNOWN" ? `\u{1F4FA}: ${type}
+` : "";
+  const sizeLine = size && size !== "UNKNOWN" ? `\u{1F4BE}: ${size} | \u{1F69C}: movies4u
+` : "";
+  return `Movies4u (Instant) (${displayQuality})
+${typeLine}\u{1F4FC}: ${title}${yearStr} - ${displayQuality}
+${sizeLine}\u{1F310}: ${lang}`;
+}
+function unpack(p, a, c, k) {
+  while (c--) {
+    if (k[c]) {
+      const placeholder = c.toString(a);
+      p = p.replace(new RegExp("\\b" + placeholder + "\\b", "g"), k[c]);
+    }
+  }
+  return p;
+}
+function resolveHlsPlaylist(masterUrl) {
+  return __async(this, null, function* () {
+    const result = {
+      masterUrl,
+      variants: [],
+      // {url, quality}
+      audios: [],
+      isMaster: false
+    };
+    try {
+      console.log(`[Movies4u] Resolving HLS playlist: ${masterUrl}`);
+      const response = yield fetchWithTimeout(masterUrl, {
+        headers: __spreadProps(__spreadValues({}, HEADERS), {
+          "Referer": M4UPLAY_BASE
+        })
+      }, 5e3);
+      if (!response.ok)
+        return result;
+      const content = yield response.text();
+      if (!content.includes("#EXTM3U"))
+        return result;
+      if (content.includes("#EXT-X-STREAM-INF")) {
+        result.isMaster = true;
+      } else if (content.includes("#EXT-X-MEDIA:TYPE=AUDIO") && !content.includes("#EXT-X-STREAM-INF")) {
+        console.log(`[Movies4u] Found audio-only playlist, skipping resolution`);
+        return result;
+      }
+      const audioMatches = content.matchAll(/#EXT-X-MEDIA:TYPE=AUDIO,.*?NAME="([^"]+)"(?:.*?LANGUAGE="([^"]+)")?(?:.*?CHANNELS="([^"]+)")?(?:.*?URI="([^"]+)")?/g);
+      for (const match of audioMatches) {
+        let audioName = match[1];
+        const language = match[2];
+        const channels = match[3];
+        let audioUri = match[4];
+        if (audioUri && !audioUri.startsWith("http")) {
+          const baseUrl = masterUrl.substring(0, masterUrl.lastIndexOf("/") + 1);
+          audioUri = baseUrl + audioUri;
+        }
+        if (channels) {
+          const channelMap = { "1": "1.0", "2": "2.0", "6": "5.1", "8": "7.1" };
+          const channelStr = channelMap[channels] || channels;
+          audioName += ` (${channelStr})`;
+        }
+        if (!result.audios.some((a) => a.name === audioName)) {
+          result.audios.push({
+            name: audioName,
+            language: language || "unknown",
+            uri: audioUri
+          });
+        }
+      }
+      const lines = content.split("\n");
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line.includes("#EXT-X-STREAM-INF")) {
+          let quality = "Unknown";
+          const resMatch = line.match(/RESOLUTION=(\d+)x(\d+)/i);
+          if (resMatch) {
+            const height = parseInt(resMatch[2]);
+            if (height >= 2160)
+              quality = "4K";
+            else if (height >= 1080)
+              quality = "1080p";
+            else if (height >= 720)
+              quality = "720p";
+            else if (height >= 480)
+              quality = "480p";
+            else
+              quality = `${height}p`;
+          }
+          if (quality === "Unknown") {
+            const nameMatch = line.match(/NAME="([^"]+)"/i);
+            if (nameMatch)
+              quality = nameMatch[1];
+          }
+          let j = i + 1;
+          while (j < lines.length && (lines[j].trim().startsWith("#") || !lines[j].trim())) {
+            j++;
+          }
+          if (j < lines.length) {
+            let variantPath = lines[j].trim();
+            if (variantPath) {
+              let variantUrl = variantPath;
+              if (!variantUrl.startsWith("http")) {
+                const baseUrl = masterUrl.substring(0, masterUrl.lastIndexOf("/") + 1);
+                variantUrl = baseUrl + variantUrl;
+              }
+              if (!result.variants.some((v) => v.url === variantUrl)) {
+                result.variants.push({ url: variantUrl, quality });
+              }
+            }
+          }
+          i = j;
+        }
+      }
+      console.log(`[Movies4u] HLS Summary: ${result.variants.length} qualities, ${result.audios.length} audios found`);
+      return result;
+    } catch (error) {
+      console.error(`[Movies4u] HLS resolution error: ${error.message}`);
+      return result;
+    }
+  });
+}
+function extractFromM4UPlay(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      console.log(`[Movies4u] Extracting from m4uplay: ${embedUrl}`);
+      const response = yield fetchWithTimeout(embedUrl, {
+        headers: __spreadProps(__spreadValues({}, HEADERS), { "Referer": MAIN_URL })
+      }, 8e3);
+      const html = yield response.text();
+      const packerMatch = html.match(new RegExp("eval\\(function\\(p,a,c,k,e,d\\)\\{.*?\\}\\s*\\((.*)\\)\\s*\\)", "s"));
+      let unpackedHtml = html;
+      if (packerMatch) {
+        try {
+          const rawArgs = packerMatch[1].trim();
+          const argsMatch = rawArgs.match(new RegExp(`^['"](.*)['"]\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*['"](.*?)['"]\\.split\\(['"]\\|['"]\\)`, "s"));
+          if (argsMatch) {
+            unpackedHtml += "\n" + unpack(argsMatch[1], parseInt(argsMatch[2]), parseInt(argsMatch[3]), argsMatch[4].split("|"));
+          }
+        } catch (unpackError) {
+        }
+      }
+      let finalStreamUrl = null;
+      const hlsPatterns = [
+        /https?:\/\/[^\s"']+\.(?:m3u8|txt)(?:\?[^\s"']*)?/,
+        /["']?(\/(?:stream|3o)\/[^"'\s]+\.(?:m3u8|txt))[^\s"']*/,
+        /["']file["']\s*:\s*["']([^"']+\.(?:m3u8|txt)[^"']*)["']/,
+        /https?:\/\/[^\s"']*master\.txt[^\s"']*/,
+        new RegExp(`["'](?:playlist|sources)["']\\s*:\\s*\\[\\s*\\{[^}]*["']file["']\\s*:\\s*["']([^"']+)["']`, "s"),
+        /([\/a-zA-Z0-9_\-\.]+\/master\.(?:m3u8|txt))/
+      ];
+      for (const pattern of hlsPatterns) {
+        const match = unpackedHtml.match(pattern);
+        if (match) {
+          let url = match[1] || match[0];
+          if (url.startsWith("/"))
+            url = M4UPLAY_BASE + url;
+          finalStreamUrl = url;
+          break;
+        }
+      }
+      if (finalStreamUrl) {
+        if (finalStreamUrl.includes("master.")) {
+          console.log(`[Movies4u] Resolving master playlist...`);
+          const resolutionResult = yield resolveHlsPlaylist(finalStreamUrl);
+          if (resolutionResult.isMaster) {
+            const audioNames = resolutionResult.audios.map((a) => a.name);
+            const audioInfo = audioNames.length > 1 ? ` [Multi Audio: ${audioNames.join(", ")}]` : "";
+            if (audioNames.length > 1) {
+              console.log(`[Movies4u] Found multi-audio: ${audioNames.join(", ")}`);
+            }
+            const qualities = resolutionResult.variants.map((v) => v.quality);
+            const bestQuality = qualities.includes("4K") ? "4K" : qualities.includes("1080p") ? "1080p" : qualities.includes("720p") ? "720p" : qualities.includes("480p") ? "480p" : qualities[0] || "Unknown";
+            return [{
+              url: resolutionResult.masterUrl,
+              audios: resolutionResult.audios,
+              audioInfo,
+              quality: bestQuality,
+              isMaster: true
+            }];
+          }
+        }
+        return [{
+          url: finalStreamUrl,
+          audios: [],
+          audioInfo: "",
+          quality: "Unknown"
+        }];
+      }
+      console.log(`[Movies4u] Could not extract stream URL from m4uplay embed`);
+      return [];
+    } catch (error) {
+      console.error(`[Movies4u] M4UPlay extraction error: ${error.message}`);
+      return [];
+    }
+  });
+}
+function extractWatchLinks(movieUrl) {
+  return __async(this, null, function* () {
+    try {
+      console.log(`[Movies4u] Extracting watch links from: ${movieUrl}`);
+      const response = yield fetchWithTimeout(movieUrl, { headers: HEADERS }, 8e3);
+      const html = yield response.text();
+      const $ = cheerio.load(html);
+      const watchLinks = [];
+      $("a").each((i, el) => {
+        const href = $(el).attr("href");
+        const button = $(el).find(".dwd-button");
+        const text = button.length > 0 ? button.text().trim() : $(el).text().trim();
+        if (href && (href.includes("m4uplay") || href.includes("mdrive.ink") || href.includes("filepress"))) {
+          watchLinks.push({
+            url: href,
+            quality: text.includes("1080p") ? "1080p" : text.includes("720p") ? "720p" : text.includes("480p") ? "480p" : text.includes("4K") || text.includes("2160p") ? "4K" : "HD",
+            label: text
+          });
+        }
+      });
+      console.log(`[Movies4u] Found ${watchLinks.length} watch links`);
+      return watchLinks;
+    } catch (error) {
+      console.error(`[Movies4u] Error extracting watch links: ${error.message}`);
+      return [];
+    }
+  });
+}
+function getTMDBDetails(tmdbId, mediaType) {
+  return __async(this, null, function* () {
+    const type = mediaType === "movie" ? "movie" : "tv";
+    const url = `${TMDB_BASE_URL}/${type}/${tmdbId}?api_key=${TMDB_API_KEY}`;
+    const response = yield fetchWithTimeout(url, {}, 8e3);
+    if (!response.ok)
+      throw new Error(`TMDB error: ${response.status}`);
+    const data = yield response.json();
+    return {
+      title: data.title || data.name,
+      year: (data.release_date || data.first_air_date || "").split("-")[0]
+    };
+  });
+}
+function searchMovies(query) {
+  return __async(this, null, function* () {
+    try {
+      const searchUrl = `${MAIN_URL}/?s=${encodeURIComponent(query)}`;
+      console.log(`[Movies4u] Searching: ${searchUrl}`);
+      const response = yield fetchWithTimeout(searchUrl, { headers: HEADERS }, 8e3);
+      const html = yield response.text();
+      const $ = cheerio.load(html);
+      const results = [];
+      $(".entry-title a").each((i, el) => {
+        const title = $(el).text().trim();
+        const url = $(el).attr("href");
+        if (title && url)
+          results.push({ title, url });
+      });
+      console.log(`[Movies4u] Found ${results.length} search results`);
+      return results;
+    } catch (error) {
+      console.error(`[Movies4u] Search error: ${error.message}`);
+      return [];
+    }
+  });
+}
+function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) {
+  return __async(this, null, function* () {
+    console.log(`[Movies4u] Processing ${mediaType} ${tmdbId}`);
+    try {
+      let mediaInfo;
+      const isNumericId = /^\d+$/.test(tmdbId);
+      if (isNumericId) {
+        try {
+          mediaInfo = yield getTMDBDetails(tmdbId, mediaType);
+        } catch (error) {
+          mediaInfo = { title: tmdbId, year: null };
+        }
+      } else {
+        mediaInfo = { title: tmdbId, year: null };
+      }
+      const searchResults = yield searchMovies(mediaInfo.title);
+      if (searchResults.length === 0)
+        return [];
+      const bestMatch = findBestTitleMatch(mediaInfo, searchResults);
+      if (!bestMatch)
+        return [];
+      console.log(`[Movies4u] Found match: ${bestMatch.title}`);
+      const yearMatch = bestMatch.title.match(/\((20\d{2}|19\d{2})\)/);
+      if (mediaInfo.title.toLowerCase() === tmdbId.toLowerCase()) {
+        mediaInfo.title = bestMatch.title.split("(")[0].trim();
+        if (yearMatch)
+          mediaInfo.year = yearMatch[1];
+      }
+      const watchLinks = yield extractWatchLinks(bestMatch.url);
+      if (watchLinks.length === 0)
+        return [];
+      const streams = [];
+      for (const watchLink of watchLinks) {
+        const extractionResults = yield extractFromM4UPlay(watchLink.url);
+        for (const result of extractionResults) {
+          const streamObj = __spreadProps(__spreadValues({}, result), {
+            quality: result.quality !== "Unknown" ? result.quality : watchLink.quality,
+            text: watchLink.label,
+            isMaster: result.isMaster
+          });
+          streams.push({
+            name: "Movies4u",
+            title: formatStreamTitle(mediaInfo, streamObj),
+            url: result.url,
+            quality: streamObj.quality,
+            headers: {
+              "Referer": "https://m4uplay.store/",
+              "User-Agent": HEADERS["User-Agent"],
+              "Origin": "https://m4uplay.store"
+            },
+            provider: "Movies4u"
+          });
+        }
+      }
+      console.log(`[Movies4u] Extracted ${streams.length} streams`);
+      return streams;
+    } catch (error) {
+      console.error("[Movies4u] getStreams failed:", error.message);
+      return [];
+    }
+  });
+}
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { getStreams };
+} else {
+  global.getStreams = { getStreams };
+}

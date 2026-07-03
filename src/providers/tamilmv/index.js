@@ -9,6 +9,7 @@ const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
 // TamilMV Configuration
 const POTENTIAL_DOMAINS = [
+  "https://www.1tamilmv.durban",
   "https://www.1tamilmv.cymru",
   "https://www.1tamilmv.immo",
   "https://www.1tamilmv.pm",
@@ -31,23 +32,20 @@ const HEADERS = {
 async function getReadyDomain() {
   console.log("[TamilMV] Checking for a working domain...");
   
-  const checks = POTENTIAL_DOMAINS.map(async (domain) => {
+  for (const domain of POTENTIAL_DOMAINS) {
     try {
       const response = await fetchWithTimeout(domain, { method: 'HEAD' }, 5000);
-      if (response.ok) return domain;
+      if (response.ok) {
+        console.log(`[TamilMV] Found working domain: ${domain}`);
+        return domain;
+      }
       const getResponse = await fetchWithTimeout(domain, { method: 'GET' }, 5000);
-      if (getResponse.ok) return domain;
+      if (getResponse.ok) {
+        console.log(`[TamilMV] Found working domain: ${domain}`);
+        return domain;
+      }
     } catch (e) {
       // Domain unreachable
-    }
-    return null;
-  });
-
-  for (const check of checks) {
-    const workingDomain = await check;
-    if (workingDomain) {
-      console.log(`[TamilMV] Found working domain: ${workingDomain}`);
-      return workingDomain;
     }
   }
 
@@ -201,9 +199,36 @@ ${sizeLine}🌐: ${language.toUpperCase()}`;
  */
 async function extractDirectStream(embedUrl) {
   try {
-    console.log(`[TamilMV] Embed URL: ${embedUrl}`);
+    console.log(`[TamilMV] Processing URL: ${embedUrl}`);
     const url = new URL(embedUrl);
     const hostname = url.hostname.toLowerCase();
+
+    // If it's a TamilMV topic URL, scrape it for external stream links
+    if (hostname.includes('1tamilmv')) {
+      console.log(`[TamilMV] Topic page detected, scraping for stream links...`);
+      const topicRes = await fetchWithTimeout(embedUrl, { headers: HEADERS }, 8000);
+      if (!topicRes.ok) return null;
+      const topicHtml = await topicRes.text();
+      const $ = cheerio.load(topicHtml);
+      
+      // Look for external stream URLs (vidnest, hglink, etc.)
+      let streamUrl = null;
+      $('a[href]').each((i, el) => {
+        const href = $(el).attr('href');
+        if (!href || streamUrl) return;
+        
+        const h = href.toLowerCase();
+        if (h.includes('vidnest') || h.includes('hglink') || h.includes('hubglink') || 
+            h.includes('luluvid') || h.includes('luluvdo') || h.includes('wishonly') ||
+            h.includes('dhcplay') || h.includes('strmup') || h.includes('gdriveplayer')) {
+          streamUrl = href;
+        }
+      });
+      
+      if (!streamUrl) return null;
+      console.log(`[TamilMV] Found stream link: ${streamUrl}`);
+      return await extractDirectStream(streamUrl);
+    }
 
     console.log(`[TamilMV] Attempting to extract from: ${hostname}`);
 
@@ -228,13 +253,9 @@ async function extractDirectStream(embedUrl) {
     console.log(`[TamilMV] Trying generic extractor for unknown host: ${hostname}`);
     return await extractFromGenericEmbed(embedUrl, hostname);
 
-    // If no specific extractor, return null (don't show embed URL)
-    console.log(`[TamilMV] No extractor for ${hostname}, skipping`);
-    return null;
-
   } catch (error) {
     console.error(`[TamilMV] Extraction error: ${error.message}`);
-    return null; // Return null instead of embed URL
+    return null;
   }
 }
 
@@ -413,7 +434,6 @@ async function getTMDBDetails(tmdbId, mediaType) {
  */
 async function searchTamilMV(query, year = null) {
   const results = [];
-  const slugBase = query.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
   
   let domainsToTry = [MAIN_URL, ...POTENTIAL_DOMAINS.filter(d => d !== MAIN_URL)];
 
@@ -421,65 +441,43 @@ async function searchTamilMV(query, year = null) {
     try {
       console.log(`[TamilMV] Trying domain: ${domain}`);
       
-      // 1. Try direct search page
-      const searchUrl = `${domain}/search/?q=${encodeURIComponent(query)}`;
-      const response = await fetchWithTimeout(searchUrl, { headers: { ...HEADERS, Referer: `${domain}/` } }, 8000);
-      
-      if (response.ok) {
-        const html = await response.text();
-        const $ = cheerio.load(html);
-        
-        const topics = [];
-        $('a[href*="/forums/topic/"]').each((i, el) => {
-          const href = $(el).attr('href');
-          const text = $(el).text().trim();
-          if (href && text && text.length > 5 && !text.includes('login')) {
-            const fullUrl = href.startsWith('http') ? href : domain + (href.startsWith('/') ? '' : '/') + href;
-            topics.push({ title: text, url: fullUrl });
-          }
-        });
-
-        // For each topic found, visit it to find [WATCH] links
-        for (const topic of topics.slice(0, 3)) {
-          try {
-            console.log(`[TamilMV] Checking topic for watch links: ${topic.title}`);
-            const topicRes = await fetchWithTimeout(topic.url, { headers: { ...HEADERS, Referer: searchUrl } }, 5000);
-            if (topicRes.ok) {
-              const topicHtml = await topicRes.text();
-              const watchLinks = extractHomepageWatchLinks(topicHtml); // Reusing the same logic
-              if (watchLinks.length > 0) {
-                 for (const wl of watchLinks) {
-                    results.push({ 
-                       title: topic.title + " " + wl.title, 
-                       url: wl.watchUrl.startsWith('http') ? wl.watchUrl : domain + (wl.watchUrl.startsWith('/') ? '' : '/') + wl.watchUrl 
-                    });
-                 }
-              }
-            }
-          } catch (e) {}
-        }
-      }
-
-      if (results.length > 0) {
-        if (domain !== MAIN_URL) {
-          MAIN_URL = domain;
-          HEADERS.Referer = `${MAIN_URL}/`;
-        }
-        return results;
-      }
-
-      // 2. Fallback: Homepage watch links
-      const homeResponse = await fetchWithTimeout(domain, { headers: { ...HEADERS, Referer: domain } }, 5000);
+      // 1. Fetch homepage and extract all movie topic links
+      const homeResponse = await fetchWithTimeout(domain, { headers: { ...HEADERS, Referer: `${domain}/` } }, 8000);
       if (homeResponse.ok) {
         const homeHtml = await homeResponse.text();
         const watchLinks = extractHomepageWatchLinks(homeHtml);
-        const homeResults = watchLinks.map(l => ({ 
-          title: l.title, 
-          url: l.watchUrl.startsWith('http') ? l.watchUrl : domain + (l.watchUrl.startsWith('/') ? '' : '/') + l.watchUrl 
-        }));
-        if (homeResults.length > 0) {
-           // We'll filter these later by similarity
-           results.push(...homeResults);
+        
+        if (watchLinks.length > 0) {
+          // Filter by title similarity to find matching movies
+          const matchingLinks = watchLinks.filter(link => {
+            const score = calculateTitleSimilarity(query, link.title);
+            return score > 0.2 || link.title.toLowerCase().includes(query.toLowerCase());
+          });
+          
+          if (matchingLinks.length > 0) {
+            console.log(`[TamilMV] Found ${matchingLinks.length} matching links on homepage`);
+            for (const wl of matchingLinks) {
+              results.push({ 
+                title: wl.title, 
+                url: wl.watchUrl.startsWith('http') ? wl.watchUrl : domain + (wl.watchUrl.startsWith('/') ? '' : '/') + wl.watchUrl 
+              });
+            }
+            if (domain !== MAIN_URL) {
+              MAIN_URL = domain;
+              HEADERS.Referer = `${MAIN_URL}/`;
+            }
+            return results;
+          }
+          
+          // If no match found, return all links for broader matching later
+          if (watchLinks.length > 0) {
+            for (const wl of watchLinks.slice(0, 20)) {
+              results.push({ 
+                title: wl.title, 
+                url: wl.watchUrl.startsWith('http') ? wl.watchUrl : domain + (wl.watchUrl.startsWith('/') ? '' : '/') + wl.watchUrl 
+              });
+            }
+          }
         }
       }
 
@@ -500,12 +498,14 @@ async function searchTamilMV(query, year = null) {
 }
 
 /**
- * Extracts [WATCH] or [W] links from homepage
+ * Extracts watch links from homepage or topic page.
+ * Handles both old [WATCH] format and new direct topic link format.
  */
 function extractHomepageWatchLinks(html) {
   const $ = cheerio.load(html);
   const results = [];
 
+  // Method 1: Look for [WATCH] or [W] decorated links (old format)
   $('a:contains("[WATCH]"), a:contains("[W]")').each((i, el) => {
     const watchUrl = $(el).attr("href");
     if (!watchUrl) return;
@@ -532,6 +532,55 @@ function extractHomepageWatchLinks(html) {
       results.push({
         title,
         watchUrl
+      });
+    }
+  });
+
+  // Method 2: Extract direct topic links from homepage content
+  // Format: <strong>Movie Title (Year) ... - <a href="topic-url">[Quality Info]</a></strong>
+  $('strong').each((i, el) => {
+    const $strong = $(el);
+    const strongText = $strong.text().trim();
+    
+    // Check if this strong element has a topic link inside
+    const topicLink = $strong.find('a[href*="/forums/topic/"]');
+    if (topicLink.length > 0 && strongText.length > 5) {
+      const href = topicLink.attr('href');
+      if (!href) return;
+      
+      // Extract movie title from the strong text (before the dash/quality info)
+      let title = strongText;
+      title = title.replace(/\s*-\s*\[.*?\]\s*$/, '').trim();
+      title = title.replace(/\s*<.*?>.*$/, '').trim();
+      
+      results.push({
+        title,
+        watchUrl: href
+      });
+    }
+  });
+
+  // Method 3: Extract all direct topic links with their surrounding text
+  $('a[href*="/forums/topic/"]').each((i, el) => {
+    const href = $(el).attr('href');
+    if (!href) return;
+    // Skip already found by previous methods
+    if (results.some(r => r.watchUrl === href)) return;
+    
+    // Get the parent block text for context
+    const parentText = $(el).parent().text().trim();
+    const linkText = $(el).text().trim();
+    
+    let title = parentText || linkText;
+    // Clean up - remove the link text if it's just quality info in brackets
+    if (linkText.match(/^\[.*\]$/) || linkText.match(/^\d+p/)) {
+      title = parentText.replace(linkText, '').replace(/\s*-\s*$/, '').trim();
+    }
+    
+    if (title && title.length > 5 && !title.includes('login') && !title.includes('register')) {
+      results.push({
+        title,
+        watchUrl: href
       });
     }
   });

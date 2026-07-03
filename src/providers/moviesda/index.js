@@ -9,11 +9,11 @@ const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
 // Moviesda Configuration
 const POTENTIAL_DOMAINS = [
+    "https://moviesda.cloud",
+    "https://moviesda19.com",
     "https://moviesda18.com",
     "https://moviesda17.com",
     "https://moviesda16.com",
-    "https://moviesda15.com",
-    "https://moviesda.com.co",
 ];
 
 let MAIN_URL = POTENTIAL_DOMAINS[0];
