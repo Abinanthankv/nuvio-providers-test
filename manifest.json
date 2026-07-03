@@ -31,7 +31,7 @@
         "tv"
       ],
       "filename": "src/providers/tamilblasters.js",
-      "enabled": false,
+      "enabled": true,
       "logo": "https://1tamilblasters.bz/uploads/monthly_2025_10/169356039_TBLwhitelogo.png.50e3c98229dab88b167074a68df15caf.png",
       "contentLanguage": [
         "ta",
@@ -49,7 +49,7 @@
         "movie"
       ],
       "filename": "src/providers/tamilian.js",
-      "enabled": true,
+      "enabled": false,
       "contentLanguage": [
         "ta",
         "en"
@@ -83,7 +83,7 @@
         "movie"
       ],
       "filename": "src/providers/movies4u.js",
-      "enabled": false,
+      "enabled": true,
       "contentLanguage": [
         "en",
         "ta",
@@ -139,7 +139,7 @@
         "movie"
       ],
       "filename": "src/providers/animelok.js",
-      "enabled": true,
+      "enabled": false,
       "logo": "https://animelok.to/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Flogo.5c53cc50.png\u0026w=384\u0026q=75",
       "contentLanguage": [
         "hi",
