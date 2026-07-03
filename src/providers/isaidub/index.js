@@ -8,12 +8,35 @@ const TMDB_API_KEY = '1b3113663c9004682ed61086cf967c44';
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
 // Isaidub Configuration
-let MAIN_URL = "https://isaidub.love";
+const POTENTIAL_DOMAINS = [
+    "https://isaidub.ceo",
+    "https://isaidub.love",
+    "https://isaidub.net",
+    "https://isaidub.io",
+];
+let MAIN_URL = POTENTIAL_DOMAINS[0];
 
 const HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
     "Referer": `${MAIN_URL}/`,
 };
+
+/**
+ * Finds a working Isaidub domain
+ */
+async function getReadyDomain() {
+    console.log("[Isaidub] Checking for a working domain...");
+    for (const domain of POTENTIAL_DOMAINS) {
+        try {
+            const response = await fetchWithTimeout(domain, { method: 'HEAD' }, 5000);
+            if (response.ok) {
+                console.log(`[Isaidub] Found working domain: ${domain}`);
+                return domain;
+            }
+        } catch (e) { }
+    }
+    return POTENTIAL_DOMAINS[0];
+}
 
 // =================================================================================
 // UTILITY FUNCTIONS
@@ -490,7 +513,7 @@ async function extractDirectStream(embedUrl, seenUrls = new Set()) {
         const url = new URL(embedUrl);
         const hostname = url.hostname.toLowerCase();
 
-        if (hostname.includes('onestream.watch') || hostname.includes('dubmv.top') || hostname.includes('dubshare.one') || hostname.includes('uptodub.ch') || hostname.includes('dubpage.xyz')) {
+        if (hostname.includes('onestream.watch') || hostname.includes('dubmv.') || hostname.includes('dubshare.') || hostname.includes('uptodub.ch') || hostname.includes('dubpage.')) {
             return await extractFromStreamPage(embedUrl, seenUrls);
         }
 
@@ -532,7 +555,7 @@ async function extractFromStreamPage(embedUrl, seenUrls = new Set()) {
         const mp4Match = html.match(/https?:\/\/[^\s"']+\.mp4[^\s"']*/i);
         if (mp4Match) return mp4Match[0];
 
-        const watchLink = $('a:contains("Watch Online"), a:contains("Stream"), a:contains("Server")').attr('href');
+        const watchLink = $('a:contains("Watch Online"), a:contains("Stream"), a:contains("Server"), a:contains("Download")').attr('href');
         if (watchLink) {
             const nextUrl = watchLink.startsWith('http') ? watchLink : (new URL(embedUrl).origin + watchLink);
             if (nextUrl !== embedUrl && !nextUrl.includes('ads')) {
@@ -656,20 +679,20 @@ async function extractFinalDownloadUrl(downloadPageUrl) {
             const href = $(el).attr('href');
             const text = $(el).text().trim().toLowerCase();
 
-            if (href && !href.includes('isaidub.love') && !href.startsWith('#')) {
-                if (text.includes('download') || text.includes('server') || href.includes('dubmv.top') || href.includes('onestream.today')) {
-                    const fullUrl = href.startsWith('http') ? href : `https:${href}`;
-                    downloadLinks.push(fullUrl);
+            if (href && href.startsWith('http') && !href.startsWith('#')) {
+                if (text.includes('download') || text.includes('server') || 
+                    href.includes('dubmv.') || href.includes('dubpage.') || 
+                    href.includes('dubshare.') || href.includes('onestream.today')) {
+                    downloadLinks.push(href);
                 }
             }
         });
 
         if (downloadLinks.length > 0) {
             const downloadUrl = downloadLinks[0];
-            const needsExtraction = downloadUrl.includes('dubmv.top/') || 
+            const needsExtraction = downloadUrl.includes('dubpage.') || 
                 downloadUrl.includes('onestream.today/') || 
-                downloadUrl.includes('uptodub.ch/') ||
-                downloadUrl.includes('dubpage.xyz/');
+                downloadUrl.includes('uptodub.ch/');
             return { url: downloadUrl, needsExtraction, size };
         }
         return null;
@@ -703,6 +726,18 @@ async function getStreams(tmdbId, mediaType, season, episode) {
             } catch (error) {
                 mediaInfo = { title: tmdbId, year: null };
             }
+        }
+
+        // Dynamic Domain Discovery
+        try {
+            const workingDomain = await getReadyDomain();
+            if (workingDomain !== MAIN_URL) {
+                console.log(`[Isaidub] Switching MAIN_URL: ${MAIN_URL} -> ${workingDomain}`);
+                MAIN_URL = workingDomain;
+                HEADERS.Referer = `${MAIN_URL}/`;
+            }
+        } catch (e) {
+            console.log(`[Isaidub] Domain discovery failed: ${e.message}`);
         }
 
         let searchResults = await search(mediaInfo.title, mediaInfo.year, mediaType);
