@@ -1,6 +1,6 @@
 /**
  * movies4u - Built from src/movies4u/
- * Generated: 2026-07-03T14:47:06.687Z
+ * Generated: 2026-07-03T15:32:03.656Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -419,10 +419,11 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
     console.log(`[Movies4u] Processing ${mediaType} ${tmdbId}`);
     try {
       let mediaInfo;
-      const isNumericId = /^\d+$/.test(tmdbId);
+      const numericId = tmdbId.replace(/^[^\d]+/, "");
+      const isNumericId = /^\d+$/.test(numericId);
       if (isNumericId) {
         try {
-          mediaInfo = yield getTMDBDetails(tmdbId, mediaType);
+          mediaInfo = yield getTMDBDetails(numericId, mediaType);
         } catch (error) {
           mediaInfo = { title: tmdbId, year: null };
         }

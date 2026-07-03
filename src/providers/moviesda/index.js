@@ -820,10 +820,11 @@ async function getStreams(tmdbId, mediaType = 'movie', season = null, episode = 
         let mediaInfo;
 
         // Get TMDB details or use as search query
-        const isNumericId = /^\d+$/.test(tmdbId);
+        const numericId = tmdbId.replace(/^[^\d]+/, '');
+        const isNumericId = /^\d+$/.test(numericId);
         if (isNumericId) {
             try {
-                mediaInfo = await getTMDBDetails(tmdbId, mediaType);
+                mediaInfo = await getTMDBDetails(numericId, mediaType);
             } catch (error) {
                 console.log(`[Moviesda] TMDB fetch failed, using "${tmdbId}" as search query`);
                 mediaInfo = { title: tmdbId, year: null };

@@ -749,10 +749,11 @@ async function getStreams(tmdbId, mediaType = 'movie', season = null, episode = 
     let searchQuery = tmdbId;
     
     // Try to get TMDB details if numeric ID
-    const isNumericId = /^\d+$/.test(tmdbId);
+    const numericId = tmdbId.replace(/^[^\d]+/, '');
+    const isNumericId = /^\d+$/.test(numericId);
     if (isNumericId) {
         try {
-            mediaInfo = await getTMDBDetails(tmdbId, mediaType);
+            mediaInfo = await getTMDBDetails(numericId, mediaType);
             if (mediaInfo?.title) {
                 searchQuery = mediaInfo.title;
             }

@@ -693,10 +693,11 @@ async function getStreams(tmdbId, mediaType = 'movie', season = null, episode = 
   try {
     let mediaInfo;
 
-    const isNumericId = /^\d+$/.test(tmdbId);
+    const numericId = tmdbId.replace(/^[^\d]+/, '');
+    const isNumericId = /^\d+$/.test(numericId);
     if (isNumericId) {
       try {
-        mediaInfo = await getTMDBDetails(tmdbId, mediaType);
+        mediaInfo = await getTMDBDetails(numericId, mediaType);
       } catch (error) {
         mediaInfo = { title: tmdbId, year: null };
       }

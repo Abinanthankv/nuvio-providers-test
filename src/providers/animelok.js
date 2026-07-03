@@ -1,6 +1,6 @@
 /**
  * animelok - Built from src/animelok/
- * Generated: 2026-07-03T14:47:06.673Z
+ * Generated: 2026-07-03T15:32:03.611Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;

@@ -604,14 +604,14 @@ async function getStreams(tmdbId, mediaType = 'movie', season = null, episode = 
   try {
     let mediaInfo;
 
-    // Try to get TMDB details first
-    const isNumericId = /^\d+$/.test(tmdbId);
+    // Strip leading non-numeric prefix (e.g. "Tt29959401" -> "29959401")
+    const numericId = tmdbId.replace(/^[^\d]+/, '');
+    const isNumericId = /^\d+$/.test(numericId);
     if (isNumericId) {
       try {
-        mediaInfo = await getTMDBDetails(tmdbId, mediaType);
+        mediaInfo = await getTMDBDetails(numericId, mediaType);
       } catch (error) {
-        // If TMDB fetch fails, use tmdbId as the title directly
-        console.log(`[Tamilblasters] TMDB fetch failed, using "${tmdbId}" as search query`);
+        console.log(`[Tamilblasters] TMDB fetch failed for ID ${numericId}, using "${tmdbId}" as search query`);
         mediaInfo = {
           title: tmdbId,
           year: null

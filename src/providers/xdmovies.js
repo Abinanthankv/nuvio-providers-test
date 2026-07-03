@@ -1,6 +1,6 @@
 /**
  * xdmovies - Built from src/xdmovies/
- * Generated: 2026-07-03T14:47:06.705Z
+ * Generated: 2026-07-03T15:32:03.675Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -153,10 +153,11 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
     console.log(`[XDmovies] Processing ${mediaType} ${tmdbId}`);
     let mediaInfo;
     let searchQuery = tmdbId;
-    const isNumericId = /^\d+$/.test(tmdbId);
+    const numericId = tmdbId.replace(/^[^\d]+/, "");
+    const isNumericId = /^\d+$/.test(numericId);
     if (isNumericId) {
       try {
-        mediaInfo = yield getTMDBDetails(tmdbId, mediaType);
+        mediaInfo = yield getTMDBDetails(numericId, mediaType);
         if (mediaInfo == null ? void 0 : mediaInfo.title) {
           searchQuery = mediaInfo.title;
         }

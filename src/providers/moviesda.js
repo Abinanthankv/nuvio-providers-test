@@ -1,6 +1,6 @@
 /**
  * moviesda - Built from src/moviesda/
- * Generated: 2026-07-03T14:47:06.689Z
+ * Generated: 2026-07-03T15:32:03.659Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -611,10 +611,11 @@ function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) 
     console.log(`[Moviesda] Processing ${mediaType} ${tmdbId}`);
     try {
       let mediaInfo;
-      const isNumericId = /^\d+$/.test(tmdbId);
+      const numericId = tmdbId.replace(/^[^\d]+/, "");
+      const isNumericId = /^\d+$/.test(numericId);
       if (isNumericId) {
         try {
-          mediaInfo = yield getTMDBDetails(tmdbId, mediaType);
+          mediaInfo = yield getTMDBDetails(numericId, mediaType);
         } catch (error) {
           console.log(`[Moviesda] TMDB fetch failed, using "${tmdbId}" as search query`);
           mediaInfo = { title: tmdbId, year: null };

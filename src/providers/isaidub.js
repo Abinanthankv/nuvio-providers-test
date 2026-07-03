@@ -1,6 +1,6 @@
 /**
  * isaidub - Built from src/isaidub/
- * Generated: 2026-07-03T14:47:06.683Z
+ * Generated: 2026-07-03T15:32:03.653Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -646,10 +646,11 @@ function getStreams(tmdbId, mediaType, season, episode) {
     console.log(`[Isaidub] Processing ${mediaType} ${tmdbId} (S:${season}, E:${episode})`);
     try {
       let mediaInfo;
-      const isNumericId = /^\d+$/.test(tmdbId);
+      const numericId = tmdbId.replace(/^[^\d]+/, "");
+      const isNumericId = /^\d+$/.test(numericId);
       if (isNumericId) {
         try {
-          mediaInfo = yield getTMDBDetails(tmdbId, mediaType);
+          mediaInfo = yield getTMDBDetails(numericId, mediaType);
         } catch (error) {
           mediaInfo = { title: tmdbId, year: null };
         }
