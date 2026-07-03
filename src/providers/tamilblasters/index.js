@@ -9,6 +9,7 @@ const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
 // Tamilblasters Configuration
 const POTENTIAL_DOMAINS = [
+  "https://www.1tamilblasters.pro",
   "https://www.1tamilblasters.company",
   "https://www.1tamilblasters.asia",
   "https://www.1tamilblasters.ws",

@@ -1,6 +1,6 @@
 /**
  * tamilblasters - Built from src/tamilblasters/
- * Generated: 2026-07-03T14:21:59.780Z
+ * Generated: 2026-07-03T14:28:36.796Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -47,6 +47,7 @@ var cheerio = require("cheerio-without-node-native");
 var TMDB_API_KEY = "1b3113663c9004682ed61086cf967c44";
 var TMDB_BASE_URL = "https://api.themoviedb.org/3";
 var POTENTIAL_DOMAINS = [
+  "https://www.1tamilblasters.pro",
   "https://www.1tamilblasters.company",
   "https://www.1tamilblasters.asia",
   "https://www.1tamilblasters.ws",

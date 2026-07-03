@@ -180,9 +180,16 @@ function formatStreamTitle(mediaInfo, stream) {
   const displayTitle = toTitleCase(movieTitle);
   const yearStr = year ? ` (${year})` : "";
   
-  const typeLine = type ? `📹: ${type}\n` : "";
+  const isTorrent = stream.streamType === 'torrent';
   const sizeLine = size && size !== "Unknown" ? `💾: ${size}\n` : "";
 
+  if (isTorrent) {
+    return `TamilMV (Torrent) (${quality})
+📼: ${displayTitle}${yearStr} ${quality}
+${sizeLine}🌐: ${language.toUpperCase()}`;
+  }
+
+  const typeLine = type ? `📹: ${type}\n` : "";
   return `TamilMV (Instant) (${quality})
 ${typeLine}📼: ${displayTitle}${yearStr} ${quality}
 ${sizeLine}🌐: ${language.toUpperCase()}`;
@@ -377,6 +384,62 @@ async function extractFromGenericEmbed(embedUrl, hostName) {
   }
 }
 
+/**
+ * Extracts magnet links from a TamilMV topic page.
+ * Quality/size info is parsed from the magnet URL's dn parameter.
+ * @param {string} topicUrl The TamilMV topic page URL
+ * @returns {Promise<Array<{url: string, quality: string, size: string}>>}
+ */
+async function extractMagnetLinks(topicUrl) {
+  try {
+    console.log(`[TamilMV] Scanning topic page for magnet links: ${topicUrl}`);
+    const response = await fetchWithTimeout(topicUrl, { headers: HEADERS }, 8000);
+    if (!response.ok) return [];
+    const html = await response.text();
+
+    const magnets = [];
+    const magnetRegex = /<a[^>]*href="(magnet:[^"]+)"[^>]*>/gi;
+    let match;
+
+    while ((match = magnetRegex.exec(html)) !== null) {
+      const magnetUrl = match[1].replace(/&amp;/g, '&');
+
+      let quality = 'Unknown';
+      let size = 'Unknown';
+
+      const dnMatch = magnetUrl.match(/[?&]dn=([^&]+)/);
+      if (dnMatch) {
+        const dn = decodeURIComponent(dnMatch[1].replace(/\+/g, ' '));
+        if (/2160p|4K/i.test(dn)) quality = '4K';
+        else if (/1080p/i.test(dn)) quality = '1080p';
+        else if (/720p/i.test(dn)) quality = '720p';
+        else if (/480p/i.test(dn)) quality = '480p';
+
+        const sizeMatch = dn.match(/(\d+(?:\.\d+)?)\s*(GB|MB)/i);
+        if (sizeMatch) size = sizeMatch[1] + ' ' + sizeMatch[2];
+      }
+
+      magnets.push({ url: magnetUrl, quality, size });
+    }
+
+    // Deduplicate by infohash
+    const seen = new Set();
+    const unique = magnets.filter(m => {
+      const hash = m.url.match(/btih:([a-f0-9]+)/i);
+      const key = hash ? hash[1] : m.url;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    console.log(`[TamilMV] Found ${unique.length} unique magnet links`);
+    return unique;
+  } catch (error) {
+    console.error(`[TamilMV] Error extracting magnet links: ${error.message}`);
+    return [];
+  }
+}
+
 // =================================================================================
 // CORE FUNCTIONS
 // =================================================================================
@@ -441,7 +504,8 @@ async function searchTamilMV(query, year = null) {
             for (const wl of matchingLinks) {
               results.push({ 
                 title: wl.title, 
-                url: wl.watchUrl.startsWith('http') ? wl.watchUrl : domain + (wl.watchUrl.startsWith('/') ? '' : '/') + wl.watchUrl 
+                url: wl.watchUrl.startsWith('http') ? wl.watchUrl : domain + (wl.watchUrl.startsWith('/') ? '' : '/') + wl.watchUrl,
+                topicUrl: wl.topicUrl ? (wl.topicUrl.startsWith('http') ? wl.topicUrl : domain + (wl.topicUrl.startsWith('/') ? '' : '/') + wl.topicUrl) : null
               });
             }
             if (domain !== MAIN_URL) {
@@ -456,7 +520,8 @@ async function searchTamilMV(query, year = null) {
             for (const wl of watchLinks.slice(0, 20)) {
               results.push({ 
                 title: wl.title, 
-                url: wl.watchUrl.startsWith('http') ? wl.watchUrl : domain + (wl.watchUrl.startsWith('/') ? '' : '/') + wl.watchUrl 
+                url: wl.watchUrl.startsWith('http') ? wl.watchUrl : domain + (wl.watchUrl.startsWith('/') ? '' : '/') + wl.watchUrl,
+                topicUrl: wl.topicUrl ? (wl.topicUrl.startsWith('http') ? wl.topicUrl : domain + (wl.topicUrl.startsWith('/') ? '' : '/') + wl.topicUrl) : null
               });
             }
           }
@@ -530,6 +595,25 @@ function extractHomepageWatchLinks(html) {
     }
 
     let title = titleNode ? $(titleNode).text().trim() : '';
+    // Extract topic page URL from the title link
+    let topicUrl = null;
+    if (titleNode) {
+      const titleAnchor = $(titleNode).find('a[href*="/forums/topic/"]');
+      if (titleAnchor.length) {
+        topicUrl = titleAnchor.attr('href');
+      }
+    }
+    // If not found in titleNode, search nearby siblings
+    if (!topicUrl) {
+      const parentLI = $(el).closest('li');
+      if (parentLI.length) {
+        const topicLink = parentLI.find('a[href*="/forums/topic/"]').first();
+        if (topicLink.length) {
+          topicUrl = topicLink.attr('href');
+        }
+      }
+    }
+    
     // Clean title - remove quality info after dash
     title = title.replace(/\s*-\s*\[.*?\]\s*$/, '').trim();
     // Remove any link text within
@@ -537,7 +621,7 @@ function extractHomepageWatchLinks(html) {
     title = title.replace(/\s*-\s*$/, '').trim();
     
     if (title) {
-      results.push({ title, watchUrl });
+      results.push({ title, watchUrl, topicUrl });
     }
   });
 
@@ -560,7 +644,16 @@ function extractHomepageWatchLinks(html) {
     title = title.replace(/<a[^>]*>.*?<\/a>/gi, '').trim();
     
     if (title && title.length > 5) {
-      results.push({ title, watchUrl: href });
+      let topicUrl = null;
+      const parentStrong = $(el).closest('strong');
+      if (parentStrong.length) {
+        const prevStrong = parentStrong.prevAll('strong').first();
+        if (prevStrong.length) {
+          const topicLink = prevStrong.find('a[href*="/forums/topic/"]');
+          if (topicLink.length) topicUrl = topicLink.attr('href');
+        }
+      }
+      results.push({ title, watchUrl: href, topicUrl });
     }
   });
 
@@ -579,7 +672,7 @@ function extractHomepageWatchLinks(html) {
     }
     
     if (title && title.length > 5 && !title.includes('login') && !title.includes('register')) {
-      results.push({ title, watchUrl: href });
+      results.push({ title, watchUrl: href, topicUrl: href });
     }
   });
 
@@ -685,6 +778,33 @@ async function getStreams(tmdbId, mediaType = 'movie', season = null, episode = 
             },
             provider: 'Tamilmv'
           });
+        }
+
+        // Also extract magnet links from the topic page (if available)
+        if (match.topicUrl) {
+          const magnets = await extractMagnetLinks(match.topicUrl);
+          for (const magnet of magnets) {
+            if (finalStreams.some(s => s.url === magnet.url)) continue;
+            const magnetObj = {
+              quality: magnet.quality,
+              size: magnet.size,
+              language: match.title.toLowerCase().includes("tam") ? "Tamil" : "Multi",
+              type: "Movie",
+              streamType: "torrent"
+            };
+            finalStreams.push({
+              name: "Tamilmv",
+              title: formatStreamTitle(mediaInfo, magnetObj),
+              url: magnet.url,
+              quality: magnet.quality,
+              headers: {
+                "Referer": MAIN_URL,
+                "User-Agent": HEADERS["User-Agent"]
+              },
+              provider: 'Tamilmv',
+              type: 'torrent'
+            });
+          }
         }
       } catch (e) {
         console.error(`[Tamilmv] Failed to process match ${match.title}:`, e.message);
