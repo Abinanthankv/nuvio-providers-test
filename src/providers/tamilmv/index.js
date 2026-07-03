@@ -475,6 +475,34 @@ async function getTMDBDetails(tmdbId, mediaType) {
 }
 
 /**
+ * Resolves an IMDb ID (ttXXXX) to media info using TMDB find endpoint
+ */
+async function resolveImdbId(imdbId) {
+  try {
+    const url = `${TMDB_BASE_URL}/find/${imdbId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
+    const response = await fetchWithTimeout(url, {}, 8000);
+    const data = await response.json();
+    const movie = data.movie_results?.[0];
+    const tv = data.tv_results?.[0];
+    if (movie) {
+      const info = { title: movie.title, year: (movie.release_date || '').split('-')[0] };
+      console.log(`[TamilMV] IMDb ${imdbId} -> Movie: "${info.title}" (${info.year || 'N/A'})`);
+      return info;
+    }
+    if (tv) {
+      const info = { title: tv.name, year: (tv.first_air_date || '').split('-')[0] };
+      console.log(`[TamilMV] IMDb ${imdbId} -> TV: "${info.title}" (${info.year || 'N/A'})`);
+      return info;
+    }
+    console.log(`[TamilMV] IMDb ${imdbId} not found on TMDB`);
+    return null;
+  } catch (error) {
+    console.error(`[TamilMV] Error resolving IMDb ID ${imdbId}:`, error.message);
+    return null;
+  }
+}
+
+/**
  * Searches TamilMV for movies
  */
 async function searchTamilMV(query, year = null) {
@@ -693,20 +721,30 @@ async function getStreams(tmdbId, mediaType = 'movie', season = null, episode = 
   try {
     let mediaInfo;
 
-    const numericId = tmdbId.replace(/^[^\d]+/, '');
-    const isNumericId = /^\d+$/.test(numericId);
-    if (isNumericId) {
-      try {
-        mediaInfo = await getTMDBDetails(numericId, mediaType);
-      } catch (error) {
+    // Resolve identifier to media info
+    const imdbMatch = tmdbId.match(/^[Tt][Tt]?(\d+)$/);
+    if (imdbMatch) {
+      mediaInfo = await resolveImdbId(imdbMatch[0]);
+      if (!mediaInfo) {
+        console.log(`[TamilMV] IMDb resolve failed for "${tmdbId}", using as-is`);
         mediaInfo = { title: tmdbId, year: null };
       }
     } else {
-      mediaInfo = { title: tmdbId, year: null };
-      const yearMatch = tmdbId.match(/\b(19|20)\d{2}\b/);
-      if (yearMatch) {
-        mediaInfo.year = yearMatch[0];
-        mediaInfo.title = tmdbId.replace(yearMatch[0], '').trim();
+      const numericId = tmdbId.replace(/^[^\d]+/, '');
+      const isNumericId = /^\d+$/.test(numericId);
+      if (isNumericId) {
+        try {
+          mediaInfo = await getTMDBDetails(numericId, mediaType);
+        } catch (error) {
+          mediaInfo = { title: tmdbId, year: null };
+        }
+      } else {
+        mediaInfo = { title: tmdbId, year: null };
+        const yearMatch = tmdbId.match(/\b(19|20)\d{2}\b/);
+        if (yearMatch) {
+          mediaInfo.year = yearMatch[0];
+          mediaInfo.title = tmdbId.replace(yearMatch[0], '').trim();
+        }
       }
     }
 

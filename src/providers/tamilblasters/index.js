@@ -268,6 +268,34 @@ async function getTMDBDetails(tmdbId, mediaType) {
 }
 
 /**
+ * Resolves an IMDb ID (ttXXXX) to media info using TMDB find endpoint
+ */
+async function resolveImdbId(imdbId) {
+  try {
+    const url = `${TMDB_BASE_URL}/find/${imdbId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
+    const response = await fetchWithTimeout(url, {}, 8000);
+    const data = await response.json();
+    const movie = data.movie_results?.[0];
+    const tv = data.tv_results?.[0];
+    if (movie) {
+      const info = { title: movie.title, year: (movie.release_date || '').split('-')[0] };
+      console.log(`[Tamilblasters] IMDb ${imdbId} -> Movie: "${info.title}" (${info.year || 'N/A'})`);
+      return info;
+    }
+    if (tv) {
+      const info = { title: tv.name, year: (tv.first_air_date || '').split('-')[0] };
+      console.log(`[Tamilblasters] IMDb ${imdbId} -> TV: "${info.title}" (${info.year || 'N/A'})`);
+      return info;
+    }
+    console.log(`[Tamilblasters] IMDb ${imdbId} not found on TMDB`);
+    return null;
+  } catch (error) {
+    console.error(`[Tamilblasters] Error resolving IMDb ID ${imdbId}:`, error.message);
+    return null;
+  }
+}
+
+/**
  * Searches Tamilblasters for the given query with domain rotation on failure
  */
 async function search(query) {
@@ -604,25 +632,28 @@ async function getStreams(tmdbId, mediaType = 'movie', season = null, episode = 
   try {
     let mediaInfo;
 
-    // Strip leading non-numeric prefix (e.g. "Tt29959401" -> "29959401")
-    const numericId = tmdbId.replace(/^[^\d]+/, '');
-    const isNumericId = /^\d+$/.test(numericId);
-    if (isNumericId) {
-      try {
-        mediaInfo = await getTMDBDetails(numericId, mediaType);
-      } catch (error) {
-        console.log(`[Tamilblasters] TMDB fetch failed for ID ${numericId}, using "${tmdbId}" as search query`);
-        mediaInfo = {
-          title: tmdbId,
-          year: null
-        };
+    // Resolve identifier to media info
+    const imdbMatch = tmdbId.match(/^[Tt][Tt]?(\d+)$/);
+    if (imdbMatch) {
+      mediaInfo = await resolveImdbId(imdbMatch[0]);
+      if (!mediaInfo) {
+        console.log(`[Tamilblasters] IMDb resolve failed for "${tmdbId}", using as-is`);
+        mediaInfo = { title: tmdbId, year: null };
       }
     } else {
-      console.log(`[Tamilblasters] Using "${tmdbId}" as search query indirectly`);
-      mediaInfo = {
-        title: toTitleCase(tmdbId),
-        year: null
-      };
+      const numericId = tmdbId.replace(/^[^\d]+/, '');
+      const isNumericId = /^\d+$/.test(numericId);
+      if (isNumericId) {
+        try {
+          mediaInfo = await getTMDBDetails(numericId, mediaType);
+        } catch (error) {
+          console.log(`[Tamilblasters] TMDB fetch failed for ID ${numericId}, using "${tmdbId}" as search query`);
+          mediaInfo = { title: tmdbId, year: null };
+        }
+      } else {
+        console.log(`[Tamilblasters] Using "${tmdbId}" as search query indirectly`);
+        mediaInfo = { title: toTitleCase(tmdbId), year: null };
+      }
     }
 
     // Dynamic Domain Discovery

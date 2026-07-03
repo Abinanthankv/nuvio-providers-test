@@ -735,6 +735,41 @@ function getTMDBDetails(tmdbId, mediaType) {
     });
 }
 
+/**
+ * Resolves an IMDb ID (ttXXXX) to media info using TMDB find endpoint
+ */
+function resolveImdbId(imdbId) {
+    const url = `${TMDB_BASE_URL}/find/${imdbId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
+    return fetch(url, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+    }).then(function (response) {
+        if (!response.ok) throw new Error(`TMDB API error: ${response.status}`);
+        return response.json();
+    }).then(function (data) {
+        const movie = data.movie_results?.[0];
+        const tv = data.tv_results?.[0];
+        if (movie) {
+            const info = { title: movie.title, year: (movie.release_date || '').split('-')[0] };
+            console.log(`[XDmovies] IMDb ${imdbId} -> Movie: "${info.title}" (${info.year || 'N/A'})`);
+            return info;
+        }
+        if (tv) {
+            const info = { title: tv.name, year: (tv.first_air_date || '').split('-')[0] };
+            console.log(`[XDmovies] IMDb ${imdbId} -> TV: "${info.title}" (${info.year || 'N/A'})`);
+            return info;
+        }
+        console.log(`[XDmovies] IMDb ${imdbId} not found on TMDB`);
+        return null;
+    }).catch(function (error) {
+        console.error(`[XDmovies] Error resolving IMDb ID ${imdbId}:`, error.message);
+        return null;
+    });
+}
+
 function extractCodec(text) {
     const m = (text || '').match(/x264|x265|h\.?264|hevc/i);
     return m ? m[0].toUpperCase() : '';
@@ -748,17 +783,27 @@ async function getStreams(tmdbId, mediaType = 'movie', season = null, episode = 
     let mediaInfo;
     let searchQuery = tmdbId;
     
-    // Try to get TMDB details if numeric ID
-    const numericId = tmdbId.replace(/^[^\d]+/, '');
-    const isNumericId = /^\d+$/.test(numericId);
-    if (isNumericId) {
-        try {
-            mediaInfo = await getTMDBDetails(numericId, mediaType);
-            if (mediaInfo?.title) {
-                searchQuery = mediaInfo.title;
+    // Resolve identifier to media info
+    const imdbMatch = tmdbId.match(/^[Tt][Tt]?(\d+)$/);
+    if (imdbMatch) {
+        mediaInfo = await resolveImdbId(imdbMatch[0]);
+        if (mediaInfo?.title) {
+            searchQuery = mediaInfo.title;
+        } else {
+            console.log(`[XDmovies] IMDb resolve failed for "${tmdbId}", using as-is`);
+        }
+    } else {
+        const numericId = tmdbId.replace(/^[^\d]+/, '');
+        const isNumericId = /^\d+$/.test(numericId);
+        if (isNumericId) {
+            try {
+                mediaInfo = await getTMDBDetails(numericId, mediaType);
+                if (mediaInfo?.title) {
+                    searchQuery = mediaInfo.title;
+                }
+            } catch (e) {
+                console.log(`[XDmovies] TMDB fetch failed, using "${tmdbId}" as search query`);
             }
-        } catch (e) {
-            console.log(`[XDmovies] TMDB fetch failed, using "${tmdbId}" as search query`);
         }
     }
     

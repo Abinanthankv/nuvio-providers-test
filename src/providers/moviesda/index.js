@@ -245,6 +245,34 @@ async function getTMDBDetails(tmdbId, mediaType) {
 }
 
 /**
+ * Resolves an IMDb ID (ttXXXX) to media info using TMDB find endpoint
+ */
+async function resolveImdbId(imdbId) {
+    try {
+        const url = `${TMDB_BASE_URL}/find/${imdbId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
+        const response = await fetchWithTimeout(url, {}, 8000);
+        const data = await response.json();
+        const movie = data.movie_results?.[0];
+        const tv = data.tv_results?.[0];
+        if (movie) {
+            const info = { title: movie.title, year: (movie.release_date || '').split('-')[0] };
+            console.log(`[Moviesda] IMDb ${imdbId} -> Movie: "${info.title}" (${info.year || 'N/A'})`);
+            return info;
+        }
+        if (tv) {
+            const info = { title: tv.name, year: (tv.first_air_date || '').split('-')[0] };
+            console.log(`[Moviesda] IMDb ${imdbId} -> TV: "${info.title}" (${info.year || 'N/A'})`);
+            return info;
+        }
+        console.log(`[Moviesda] IMDb ${imdbId} not found on TMDB`);
+        return null;
+    } catch (error) {
+        console.error(`[Moviesda] Error resolving IMDb ID ${imdbId}:`, error.message);
+        return null;
+    }
+}
+
+/**
  * Searches TMDB by movie title to get year
  */
 async function searchTMDBByTitle(title, mediaType) {
@@ -819,29 +847,37 @@ async function getStreams(tmdbId, mediaType = 'movie', season = null, episode = 
     try {
         let mediaInfo;
 
-        // Get TMDB details or use as search query
-        const numericId = tmdbId.replace(/^[^\d]+/, '');
-        const isNumericId = /^\d+$/.test(numericId);
-        if (isNumericId) {
-            try {
-                mediaInfo = await getTMDBDetails(numericId, mediaType);
-            } catch (error) {
-                console.log(`[Moviesda] TMDB fetch failed, using "${tmdbId}" as search query`);
+        // Resolve identifier to media info
+        const imdbMatch = tmdbId.match(/^[Tt][Tt]?(\d+)$/);
+        if (imdbMatch) {
+            mediaInfo = await resolveImdbId(imdbMatch[0]);
+            if (!mediaInfo) {
+                console.log(`[Moviesda] IMDb resolve failed for "${tmdbId}", using as-is`);
                 mediaInfo = { title: tmdbId, year: null };
             }
         } else {
-            // It's a title string - try to search TMDB to get the year
-            console.log(`[Moviesda] Using "${tmdbId}" as search query`);
-            try {
-                const tmdbResult = await searchTMDBByTitle(tmdbId, mediaType);
-                if (tmdbResult && tmdbResult.year) {
-                    mediaInfo = tmdbResult;
-                } else {
+            const numericId = tmdbId.replace(/^[^\d]+/, '');
+            const isNumericId = /^\d+$/.test(numericId);
+            if (isNumericId) {
+                try {
+                    mediaInfo = await getTMDBDetails(numericId, mediaType);
+                } catch (error) {
+                    console.log(`[Moviesda] TMDB fetch failed, using "${tmdbId}" as search query`);
                     mediaInfo = { title: tmdbId, year: null };
                 }
-            } catch (error) {
-                console.log(`[Moviesda] TMDB search failed: ${error.message}`);
-                mediaInfo = { title: tmdbId, year: null };
+            } else {
+                console.log(`[Moviesda] Using "${tmdbId}" as search query`);
+                try {
+                    const tmdbResult = await searchTMDBByTitle(tmdbId, mediaType);
+                    if (tmdbResult && tmdbResult.year) {
+                        mediaInfo = tmdbResult;
+                    } else {
+                        mediaInfo = { title: tmdbId, year: null };
+                    }
+                } catch (error) {
+                    console.log(`[Moviesda] TMDB search failed: ${error.message}`);
+                    mediaInfo = { title: tmdbId, year: null };
+                }
             }
         }
 
