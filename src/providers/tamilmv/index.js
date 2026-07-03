@@ -211,7 +211,7 @@ async function extractDirectStream(embedUrl) {
       const topicHtml = await topicRes.text();
       const $ = cheerio.load(topicHtml);
       
-      // Look for external stream URLs (vidnest, hglink, etc.)
+      // Look for external stream URLs
       let streamUrl = null;
       $('a[href]').each((i, el) => {
         const href = $(el).attr('href');
@@ -220,7 +220,8 @@ async function extractDirectStream(embedUrl) {
         const h = href.toLowerCase();
         if (h.includes('vidnest') || h.includes('hglink') || h.includes('hubglink') || 
             h.includes('luluvid') || h.includes('luluvdo') || h.includes('wishonly') ||
-            h.includes('dhcplay') || h.includes('strmup') || h.includes('gdriveplayer')) {
+            h.includes('dhcplay') || h.includes('strmup') || h.includes('gdriveplayer') ||
+            h.includes('streamcash') || h.includes('streamdady')) {
           streamUrl = href;
         }
       });
@@ -230,27 +231,8 @@ async function extractDirectStream(embedUrl) {
       return await extractDirectStream(streamUrl);
     }
 
+    // If it's a known embed host, use the generic extractor directly
     console.log(`[TamilMV] Attempting to extract from: ${hostname}`);
-
-    // Try different extractors based on hostname
-    if (hostname.includes('hglink') || hostname.includes('hubglink')) {
-      return await extractFromGenericEmbed(embedUrl, 'hglink');
-    } else if (hostname.includes('luluvid') || hostname.includes('luluvdo')) {
-      return await extractFromGenericEmbed(embedUrl, 'luluvid');
-    } else if (hostname.includes('wishonly')) {
-      return await extractFromGenericEmbed(embedUrl, 'wishonly');
-    } else if (hostname.includes('dhcplay')) {
-      return await extractFromGenericEmbed(embedUrl, 'dhcplay');
-    } else if (hostname.includes('vidnest')) {
-      return await extractFromGenericEmbed(embedUrl, 'vidnest');
-    } else if (hostname.includes('strmup')) {
-      return await extractFromStrmup(embedUrl);
-    } else if (hostname.includes('gdriveplayer') || hostname.includes('pixel')) {
-       return await extractFromGenericEmbed(embedUrl, 'generic');
-    }
-
-    // Try generic extractor for any other unknown host
-    console.log(`[TamilMV] Trying generic extractor for unknown host: ${hostname}`);
     return await extractFromGenericEmbed(embedUrl, hostname);
 
   } catch (error) {
@@ -505,83 +487,99 @@ function extractHomepageWatchLinks(html) {
   const $ = cheerio.load(html);
   const results = [];
 
-  // Method 1: Look for [WATCH] or [W] decorated links (old format)
-  $('a:contains("[WATCH]"), a:contains("[W]")').each((i, el) => {
-    const watchUrl = $(el).attr("href");
+  // Method 1: Extract [W] / [WATCH] links with their preceding title
+  $('a').each((i, el) => {
+    const text = $(el).text().trim();
+    if (text !== '[W]' && text !== '[WATCH]') return;
+
+    const watchUrl = $(el).attr('href');
     if (!watchUrl) return;
 
-    let titleNodes = [];
-    let curr = el.previousSibling;
-    if (!curr && el.parentNode) {
-      curr = el.parentNode.previousSibling;
-    }
-
-    while (curr) {
-      const $curr = $(curr);
-      const tag = curr.tagName ? curr.tagName.toLowerCase() : null;
-      if (tag === "br" || tag === "p" || tag === "hr" || tag === "div") break;
-      if ($curr.text().includes("[WATCH]") || $curr.text().includes("[W]")) break;
-      titleNodes.unshift(curr);
-      curr = curr.previousSibling;
-    }
-
-    let title = $(titleNodes).text().trim();
-    title = title.replace(/^[- \t\n\r|\[\], \u00A0]+/, "").replace(/[- \t\n\r|\[\], \u00A0]+$/, "").trim();
-
-    if (title) {
-      results.push({
-        title,
-        watchUrl
-      });
-    }
-  });
-
-  // Method 2: Extract direct topic links from homepage content
-  // Format: <strong>Movie Title (Year) ... - <a href="topic-url">[Quality Info]</a></strong>
-  $('strong').each((i, el) => {
-    const $strong = $(el);
-    const strongText = $strong.text().trim();
+    // Walk up to find the parent strong element, then look backwards for the title
+    let titleNode = null;
+    let parent = el.parentNode;
     
-    // Check if this strong element has a topic link inside
-    const topicLink = $strong.find('a[href*="/forums/topic/"]');
-    if (topicLink.length > 0 && strongText.length > 5) {
-      const href = topicLink.attr('href');
-      if (!href) return;
-      
-      // Extract movie title from the strong text (before the dash/quality info)
-      let title = strongText;
-      title = title.replace(/\s*-\s*\[.*?\]\s*$/, '').trim();
-      title = title.replace(/\s*<.*?>.*$/, '').trim();
-      
-      results.push({
-        title,
-        watchUrl: href
-      });
+    // Look for previous sibling <strong> that contains the movie title
+    let prev = parent.previousSibling;
+    while (prev && !titleNode) {
+      if (prev.tagName && prev.tagName.toLowerCase() === 'strong') {
+        const strongText = $(prev).text().trim();
+        if (strongText && strongText.length > 10 && !strongText.includes('Login') && !strongText.includes('Register')) {
+          titleNode = prev;
+        }
+      }
+      prev = prev.previousSibling;
+    }
+    
+    // If not a strong, get the parent's previous strong sibling
+    if (!titleNode) {
+      let p = parent;
+      while (p && !titleNode) {
+        let s = p.previousSibling;
+        while (s && !titleNode) {
+          if (s.tagName && s.tagName.toLowerCase() === 'strong') {
+            const strongText = $(s).text().trim();
+            if (strongText && strongText.length > 10 && !strongText.includes('Login') && !strongText.includes('Register')) {
+              titleNode = s;
+            }
+          }
+          s = s.previousSibling;
+        }
+        p = p.parentNode;
+      }
+    }
+
+    let title = titleNode ? $(titleNode).text().trim() : '';
+    // Clean title - remove quality info after dash
+    title = title.replace(/\s*-\s*\[.*?\]\s*$/, '').trim();
+    // Remove any link text within
+    title = title.replace(/<a[^>]*>.*?<\/a>/gi, '').trim();
+    title = title.replace(/\s*-\s*$/, '').trim();
+    
+    if (title) {
+      results.push({ title, watchUrl });
     }
   });
 
-  // Method 3: Extract all direct topic links with their surrounding text
+  // Method 2: Extract direct streamcash links not paired with [W]
+  $('a[href*="streamcash.to/embed/"], a[href*="luluvid.com/e/"], a[href*="luluvdo.com/e/"]').each((i, el) => {
+    const href = $(el).attr('href');
+    if (!href || results.some(r => r.watchUrl === href)) return;
+    
+    const parentStrong = $(el).closest('strong');
+    const prevStrong = parentStrong.length ? parentStrong.prevAll('strong').first() : null;
+    
+    let title = '';
+    if (prevStrong.length) {
+      title = prevStrong.text().trim();
+    } else {
+      title = $(el).closest('div, p').text().trim();
+    }
+    
+    title = title.replace(/\s*-\s*\[.*?\]\s*$/, '').trim();
+    title = title.replace(/<a[^>]*>.*?<\/a>/gi, '').trim();
+    
+    if (title && title.length > 5) {
+      results.push({ title, watchUrl: href });
+    }
+  });
+
+  // Method 3: Extract direct topic links as fallback
   $('a[href*="/forums/topic/"]').each((i, el) => {
     const href = $(el).attr('href');
     if (!href) return;
-    // Skip already found by previous methods
     if (results.some(r => r.watchUrl === href)) return;
     
-    // Get the parent block text for context
     const parentText = $(el).parent().text().trim();
     const linkText = $(el).text().trim();
     
     let title = parentText || linkText;
-    // Clean up - remove the link text if it's just quality info in brackets
     if (linkText.match(/^\[.*\]$/) || linkText.match(/^\d+p/)) {
       title = parentText.replace(linkText, '').replace(/\s*-\s*$/, '').trim();
     }
     
     if (title && title.length > 5 && !title.includes('login') && !title.includes('register')) {
-      results.push({
-        title,
-        watchUrl: href
-      });
+      results.push({ title, watchUrl: href });
     }
   });
 

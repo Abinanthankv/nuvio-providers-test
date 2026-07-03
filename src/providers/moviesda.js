@@ -1,6 +1,6 @@
 /**
  * moviesda - Built from src/moviesda/
- * Generated: 2026-07-03T14:01:24.550Z
+ * Generated: 2026-07-03T14:21:59.776Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -47,11 +47,11 @@ var cheerio = require("cheerio-without-node-native");
 var TMDB_API_KEY = "1b3113663c9004682ed61086cf967c44";
 var TMDB_BASE_URL = "https://api.themoviedb.org/3";
 var POTENTIAL_DOMAINS = [
+  "https://moviesda.cloud",
   "https://moviesda19.com",
   "https://moviesda18.com",
   "https://moviesda17.com",
-  "https://moviesda16.com",
-  "https://moviesda15.com"
+  "https://moviesda16.com"
 ];
 var MAIN_URL = POTENTIAL_DOMAINS[0];
 var HEADERS = {

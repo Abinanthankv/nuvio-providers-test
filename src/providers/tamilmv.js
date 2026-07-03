@@ -1,6 +1,6 @@
 /**
  * tamilmv - Built from src/tamilmv/
- * Generated: 2026-07-03T14:01:24.560Z
+ * Generated: 2026-07-03T14:21:59.787Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -158,7 +158,7 @@ function extractDirectStream(embedUrl) {
           if (!href || streamUrl)
             return;
           const h = href.toLowerCase();
-          if (h.includes("vidnest") || h.includes("hglink") || h.includes("hubglink") || h.includes("luluvid") || h.includes("luluvdo") || h.includes("wishonly") || h.includes("dhcplay") || h.includes("strmup") || h.includes("gdriveplayer")) {
+          if (h.includes("vidnest") || h.includes("hglink") || h.includes("hubglink") || h.includes("luluvid") || h.includes("luluvdo") || h.includes("wishonly") || h.includes("dhcplay") || h.includes("strmup") || h.includes("gdriveplayer") || h.includes("streamcash") || h.includes("streamdady")) {
             streamUrl = href;
           }
         });
@@ -168,53 +168,9 @@ function extractDirectStream(embedUrl) {
         return yield extractDirectStream(streamUrl);
       }
       console.log(`[TamilMV] Attempting to extract from: ${hostname}`);
-      if (hostname.includes("hglink") || hostname.includes("hubglink")) {
-        return yield extractFromGenericEmbed(embedUrl, "hglink");
-      } else if (hostname.includes("luluvid") || hostname.includes("luluvdo")) {
-        return yield extractFromGenericEmbed(embedUrl, "luluvid");
-      } else if (hostname.includes("wishonly")) {
-        return yield extractFromGenericEmbed(embedUrl, "wishonly");
-      } else if (hostname.includes("dhcplay")) {
-        return yield extractFromGenericEmbed(embedUrl, "dhcplay");
-      } else if (hostname.includes("vidnest")) {
-        return yield extractFromGenericEmbed(embedUrl, "vidnest");
-      } else if (hostname.includes("strmup")) {
-        return yield extractFromStrmup(embedUrl);
-      } else if (hostname.includes("gdriveplayer") || hostname.includes("pixel")) {
-        return yield extractFromGenericEmbed(embedUrl, "generic");
-      }
-      console.log(`[TamilMV] Trying generic extractor for unknown host: ${hostname}`);
       return yield extractFromGenericEmbed(embedUrl, hostname);
     } catch (error) {
       console.error(`[TamilMV] Extraction error: ${error.message}`);
-      return null;
-    }
-  });
-}
-function extractFromStrmup(embedUrl) {
-  return __async(this, null, function* () {
-    try {
-      const url = new URL(embedUrl);
-      const host = url.origin;
-      const filecode = url.pathname.split("/").filter((p) => p).pop();
-      if (!filecode)
-        return null;
-      console.log(`[TamilMV] Strmup filecode: ${filecode}`);
-      const ajaxUrl = `${host}/ajax/stream?filecode=${filecode}`;
-      const response = yield fetchWithTimeout(ajaxUrl, {
-        headers: __spreadProps(__spreadValues({}, HEADERS), {
-          "X-Requested-With": "XMLHttpRequest",
-          "Referer": embedUrl
-        })
-      }, 5e3);
-      const data = yield response.json();
-      if (data && data.streaming_url) {
-        console.log(`[TamilMV] Found direct URL from strmup: ${data.streaming_url}`);
-        return data.streaming_url;
-      }
-      return null;
-    } catch (error) {
-      console.error(`[TamilMV] Strmup extraction failed: ${error.message}`);
       return null;
     }
   });
@@ -393,49 +349,65 @@ function searchTamilMV(query, year = null) {
 function extractHomepageWatchLinks(html) {
   const $ = cheerio.load(html);
   const results = [];
-  $('a:contains("[WATCH]"), a:contains("[W]")').each((i, el) => {
+  $("a").each((i, el) => {
+    const text = $(el).text().trim();
+    if (text !== "[W]" && text !== "[WATCH]")
+      return;
     const watchUrl = $(el).attr("href");
     if (!watchUrl)
       return;
-    let titleNodes = [];
-    let curr = el.previousSibling;
-    if (!curr && el.parentNode) {
-      curr = el.parentNode.previousSibling;
+    let titleNode = null;
+    let parent = el.parentNode;
+    let prev = parent.previousSibling;
+    while (prev && !titleNode) {
+      if (prev.tagName && prev.tagName.toLowerCase() === "strong") {
+        const strongText = $(prev).text().trim();
+        if (strongText && strongText.length > 10 && !strongText.includes("Login") && !strongText.includes("Register")) {
+          titleNode = prev;
+        }
+      }
+      prev = prev.previousSibling;
     }
-    while (curr) {
-      const $curr = $(curr);
-      const tag = curr.tagName ? curr.tagName.toLowerCase() : null;
-      if (tag === "br" || tag === "p" || tag === "hr" || tag === "div")
-        break;
-      if ($curr.text().includes("[WATCH]") || $curr.text().includes("[W]"))
-        break;
-      titleNodes.unshift(curr);
-      curr = curr.previousSibling;
+    if (!titleNode) {
+      let p = parent;
+      while (p && !titleNode) {
+        let s = p.previousSibling;
+        while (s && !titleNode) {
+          if (s.tagName && s.tagName.toLowerCase() === "strong") {
+            const strongText = $(s).text().trim();
+            if (strongText && strongText.length > 10 && !strongText.includes("Login") && !strongText.includes("Register")) {
+              titleNode = s;
+            }
+          }
+          s = s.previousSibling;
+        }
+        p = p.parentNode;
+      }
     }
-    let title = $(titleNodes).text().trim();
-    title = title.replace(/^[- \t\n\r|\[\], \u00A0]+/, "").replace(/[- \t\n\r|\[\], \u00A0]+$/, "").trim();
+    let title = titleNode ? $(titleNode).text().trim() : "";
+    title = title.replace(/\s*-\s*\[.*?\]\s*$/, "").trim();
+    title = title.replace(/<a[^>]*>.*?<\/a>/gi, "").trim();
+    title = title.replace(/\s*-\s*$/, "").trim();
     if (title) {
-      results.push({
-        title,
-        watchUrl
-      });
+      results.push({ title, watchUrl });
     }
   });
-  $("strong").each((i, el) => {
-    const $strong = $(el);
-    const strongText = $strong.text().trim();
-    const topicLink = $strong.find('a[href*="/forums/topic/"]');
-    if (topicLink.length > 0 && strongText.length > 5) {
-      const href = topicLink.attr("href");
-      if (!href)
-        return;
-      let title = strongText;
-      title = title.replace(/\s*-\s*\[.*?\]\s*$/, "").trim();
-      title = title.replace(/\s*<.*?>.*$/, "").trim();
-      results.push({
-        title,
-        watchUrl: href
-      });
+  $('a[href*="streamcash.to/embed/"], a[href*="luluvid.com/e/"], a[href*="luluvdo.com/e/"]').each((i, el) => {
+    const href = $(el).attr("href");
+    if (!href || results.some((r) => r.watchUrl === href))
+      return;
+    const parentStrong = $(el).closest("strong");
+    const prevStrong = parentStrong.length ? parentStrong.prevAll("strong").first() : null;
+    let title = "";
+    if (prevStrong.length) {
+      title = prevStrong.text().trim();
+    } else {
+      title = $(el).closest("div, p").text().trim();
+    }
+    title = title.replace(/\s*-\s*\[.*?\]\s*$/, "").trim();
+    title = title.replace(/<a[^>]*>.*?<\/a>/gi, "").trim();
+    if (title && title.length > 5) {
+      results.push({ title, watchUrl: href });
     }
   });
   $('a[href*="/forums/topic/"]').each((i, el) => {
@@ -451,10 +423,7 @@ function extractHomepageWatchLinks(html) {
       title = parentText.replace(linkText, "").replace(/\s*-\s*$/, "").trim();
     }
     if (title && title.length > 5 && !title.includes("login") && !title.includes("register")) {
-      results.push({
-        title,
-        watchUrl: href
-      });
+      results.push({ title, watchUrl: href });
     }
   });
   return results;
