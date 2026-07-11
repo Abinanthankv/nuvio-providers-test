@@ -413,6 +413,78 @@ async function extractFromM4UPlay(embedUrl) {
 }
 
 /**
+ * Extracts direct video URL from gdflix.dev file pages
+ */
+async function extractFromGDFlix(embedUrl) {
+    try {
+        console.log(`[Movies4u] Extracting from gdflix: ${embedUrl}`);
+        const response = await fetchWithTimeout(embedUrl, {
+            headers: { ...HEADERS, 'Referer': MAIN_URL }
+        }, 8000);
+
+        const html = await response.text();
+        const r2Match = html.match(/https:\/\/pub-[a-z0-9]+\.r2\.dev\/[^\"'\\s<>]+/);
+        if (r2Match) {
+            const url = r2Match[0];
+            const titleMatch = html.match(/<title>([^<]+)<\/title>/);
+            const filename = titleMatch ? titleMatch[1] : '';
+            let quality = 'HD';
+            if (/1080p|2160p/i.test(filename)) quality = '1080p';
+            else if (/720p/i.test(filename)) quality = '720p';
+            else if (/480p/i.test(filename)) quality = '480p';
+            else if (/4K/i.test(filename)) quality = '4K';
+            console.log(`[Movies4u] Found direct R2 URL from gdflix (${quality})`);
+            return [{
+                url: url,
+                quality: quality,
+                isMaster: false
+            }];
+        }
+
+        console.log(`[Movies4u] No direct URL found on gdflix page`);
+        return [];
+    } catch (error) {
+        console.error(`[Movies4u] GDFlix extraction error: ${error.message}`);
+        return [];
+    }
+}
+
+/**
+ * Extracts stream URLs from mdrive.buzz page
+ */
+async function extractFromMDrive(embedUrl) {
+    try {
+        console.log(`[Movies4u] Extracting from mdrive: ${embedUrl}`);
+        const response = await fetchWithTimeout(embedUrl, {
+            headers: { ...HEADERS, 'Referer': MAIN_URL }
+        }, 8000);
+
+        const html = await response.text();
+        const $ = cheerio.load(html);
+        const streams = [];
+
+        $('a').each((i, el) => {
+            const href = $(el).attr('href');
+            const text = $(el).text().trim();
+            
+            if (href && (text.includes('GDX-Cloud') || text.includes('Hub-Cloud') || text.includes('GDFlix') || text.includes('V-Cloud') || text.includes('Filepress') || text.includes('G-Direct'))) {
+                streams.push({
+                    url: href,
+                    quality: "Unknown",
+                    label: text
+                });
+            }
+        });
+
+        console.log(`[Movies4u] Extracted ${streams.length} links from mdrive`);
+        return streams;
+    } catch (error) {
+        console.error(`[Movies4u] MDrive extraction error: ${error.message}`);
+        return [];
+    }
+}
+
+/**
  * Extracts watch links from movie page
  */
 async function extractWatchLinks(movieUrl) {
@@ -425,10 +497,8 @@ async function extractWatchLinks(movieUrl) {
 
         $('a').each((i, el) => {
             const href = $(el).attr('href');
-            const button = $(el).find('.dwd-button');
-            const text = button.length > 0 ? button.text().trim() : $(el).text().trim();
-            
-            if (href && (href.includes('m4uplay') || href.includes('mdrive.ink') || href.includes('filepress'))) {
+            const text = $(el).text().trim();
+            if (href && (href.includes('m4uplay') || href.includes('mdrive.ink') || href.includes('filepress') || href.includes('mdrive.buzz'))) {
                 watchLinks.push({
                     url: href,
                     quality: text.includes('1080p') ? '1080p' :
@@ -568,27 +638,47 @@ async function getStreams(tmdbId, mediaType = 'movie', season = null, episode = 
 
         const streams = [];
         for (const watchLink of watchLinks) {
-            const extractionResults = await extractFromM4UPlay(watchLink.url);
-            for (const result of extractionResults) {
-                const streamObj = {
-                    ...result,
-                    quality: result.quality !== "Unknown" ? result.quality : watchLink.quality,
-                    text: watchLink.label,
-                    isMaster: result.isMaster
-                };
-
-                streams.push({
-                    name: "Movies4u",
-                    title: formatStreamTitle(mediaInfo, streamObj),
-                    url: result.url,
-                    quality: streamObj.quality,
-                    headers: { 
-                        "Referer": "https://m4uplay.store/",
-                        "User-Agent": HEADERS["User-Agent"],
-                        "Origin": "https://m4uplay.store"
-                    },
-                    provider: 'Movies4u'
-                });
+            let extractionResults = [];
+            if (watchLink.url.includes('mdrive.buzz')) {
+                const hubLinks = await extractFromMDrive(watchLink.url);
+                for (const hubLink of hubLinks) {
+                    let hubResult = [];
+                    if (hubLink.url.includes('gdflix')) {
+                        hubResult = await extractFromGDFlix(hubLink.url);
+                    }
+                    for (const result of hubResult) {
+                        const streamObj = {
+                            ...result,
+                            quality: result.quality !== "Unknown" ? result.quality : watchLink.quality,
+                            text: watchLink.label,
+                            isMaster: result.isMaster || false
+                        };
+                        streams.push({
+                            name: "Movies4u",
+                            title: formatStreamTitle(mediaInfo, streamObj),
+                            url: result.url,
+                            quality: streamObj.quality,
+                            headers: { Referer: watchLink.url }
+                        });
+                    }
+                }
+            } else {
+                extractionResults = await extractFromM4UPlay(watchLink.url);
+                for (const result of extractionResults) {
+                    const streamObj = {
+                        ...result,
+                        quality: result.quality !== "Unknown" ? result.quality : watchLink.quality,
+                        text: watchLink.label,
+                        isMaster: result.isMaster || false
+                    };
+                    streams.push({
+                        name: "Movies4u",
+                        title: formatStreamTitle(mediaInfo, streamObj),
+                        url: result.url,
+                        quality: streamObj.quality,
+                        headers: { Referer: watchLink.url }
+                    });
+                }
             }
         }
 
