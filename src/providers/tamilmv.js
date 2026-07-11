@@ -1,6 +1,6 @@
 /**
  * tamilmv - Built from src/tamilmv/
- * Generated: 2026-07-11T11:54:51.618Z
+ * Generated: 2026-07-11T11:58:23.136Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
@@ -535,6 +535,8 @@ function resolveImdbId(imdbId) {
   });
 }
 function extractHomepageWatchLinks(html) {
+  if (typeof html !== "string")
+    return [];
   const $ = cheerio.load(html);
   const results = [];
   const wLinkRegex = /<a[^>]*href="([^"]+)"[^>]*>\[W\]<\/a>/gi;
@@ -585,15 +587,25 @@ function searchTamilMV(query, year = null) {
         console.log(`[TamilMV] Trying domain: ${domain}`);
         const homeResponse = yield fetchWithTimeout(domain, { method: "GET" }, 8e3);
         let homeHtml = null;
-        if (typeof homeResponse === "string") {
-          homeHtml = homeResponse;
-        } else if (homeResponse) {
-          try {
-            homeHtml = typeof homeResponse.text === "function" ? yield homeResponse.text() : homeResponse.body || homeResponse._body || null;
-          } catch (_) {
+        try {
+          if (typeof homeResponse === "string") {
+            homeHtml = homeResponse;
+          } else if (typeof (homeResponse == null ? void 0 : homeResponse.text) === "function") {
+            homeHtml = yield homeResponse.text();
+          } else if (typeof (homeResponse == null ? void 0 : homeResponse.text) === "string") {
+            homeHtml = homeResponse.text;
+          } else if (homeResponse == null ? void 0 : homeResponse.body) {
+            homeHtml = String(homeResponse.body);
+          } else if (homeResponse == null ? void 0 : homeResponse._body) {
+            homeHtml = String(homeResponse._body);
+          } else if (homeResponse == null ? void 0 : homeResponse.data) {
+            homeHtml = String(homeResponse.data);
+          } else if (homeResponse && typeof homeResponse.toString === "function") {
+            homeHtml = homeResponse.toString();
           }
+        } catch (_) {
         }
-        if (!homeHtml)
+        if (!homeHtml || typeof homeHtml !== "string")
           continue;
         const watchLinks = extractHomepageWatchLinks(homeHtml);
         if (watchLinks.length > 0) {

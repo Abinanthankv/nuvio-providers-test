@@ -424,6 +424,7 @@ async function resolveImdbId(imdbId) {
 }
 
 function extractHomepageWatchLinks(html) {
+  if (typeof html !== 'string') return [];
   const $ = cheerio.load(html);
   const results = [];
 
@@ -481,15 +482,24 @@ async function searchTamilMV(query, year = null) {
       console.log(`[TamilMV] Trying domain: ${domain}`);
       const homeResponse = await fetchWithTimeout(domain, { method: 'GET' }, 8000);
       let homeHtml = null;
-      if (typeof homeResponse === 'string') {
-        homeHtml = homeResponse;
-      } else if (homeResponse) {
-        try {
-          homeHtml = typeof homeResponse.text === 'function' ? await homeResponse.text()
-            : homeResponse.body || homeResponse._body || null;
-        } catch (_) {}
-      }
-      if (!homeHtml) continue;
+      try {
+        if (typeof homeResponse === 'string') {
+          homeHtml = homeResponse;
+        } else if (typeof homeResponse?.text === 'function') {
+          homeHtml = await homeResponse.text();
+        } else if (typeof homeResponse?.text === 'string') {
+          homeHtml = homeResponse.text;
+        } else if (homeResponse?.body) {
+          homeHtml = String(homeResponse.body);
+        } else if (homeResponse?._body) {
+          homeHtml = String(homeResponse._body);
+        } else if (homeResponse?.data) {
+          homeHtml = String(homeResponse.data);
+        } else if (homeResponse && typeof homeResponse.toString === 'function') {
+          homeHtml = homeResponse.toString();
+        }
+      } catch (_) {}
+      if (!homeHtml || typeof homeHtml !== 'string') continue;
       const watchLinks = extractHomepageWatchLinks(homeHtml);
       if (watchLinks.length > 0) {
         const matchingLinks = watchLinks.filter(link => {
