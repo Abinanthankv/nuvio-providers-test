@@ -1,6 +1,6 @@
 /**
  * isaidub - Built from src/isaidub/
- * Generated: 2026-07-11T11:47:47.014Z
+ * Generated: 2026-07-11T11:54:51.596Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;

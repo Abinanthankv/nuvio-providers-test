@@ -479,41 +479,45 @@ async function searchTamilMV(query, year = null) {
   for (const domain of domainsToTry) {
     try {
       console.log(`[TamilMV] Trying domain: ${domain}`);
-      const homeResponse = await fetchWithTimeout(domain, { headers: { ...HEADERS, Referer: `${domain}/` } }, 8000);
-      const homeHtml = typeof homeResponse === 'string' ? homeResponse
-        : homeResponse && typeof homeResponse.text === 'function' ? await homeResponse.text()
-        : null;
+      const homeResponse = await fetchWithTimeout(domain, { method: 'GET' }, 8000);
+      let homeHtml = null;
+      if (typeof homeResponse === 'string') {
+        homeHtml = homeResponse;
+      } else if (homeResponse) {
+        try {
+          homeHtml = typeof homeResponse.text === 'function' ? await homeResponse.text()
+            : homeResponse.body || homeResponse._body || null;
+        } catch (_) {}
+      }
       if (!homeHtml) continue;
-      if (typeof homeResponse === 'string' || homeResponse.ok) {
-        const watchLinks = extractHomepageWatchLinks(homeHtml);
-        if (watchLinks.length > 0) {
-          const matchingLinks = watchLinks.filter(link => {
-            const score = calculateTitleSimilarity(query, link.title);
-            return score > 0.2 || link.title.toLowerCase().includes(query.toLowerCase());
-          });
-          if (matchingLinks.length > 0) {
-            console.log(`[TamilMV] Found ${matchingLinks.length} matching links on homepage`);
-            for (const wl of matchingLinks) {
-              results.push({
-                title: wl.title,
-                url: wl.watchUrl.startsWith('http') ? wl.watchUrl : domain + (wl.watchUrl.startsWith('/') ? '' : '/') + wl.watchUrl,
-                topicUrl: wl.topicUrl ? (wl.topicUrl.startsWith('http') ? wl.topicUrl : domain + (wl.topicUrl.startsWith('/') ? '' : '/') + wl.topicUrl) : null
-              });
-            }
-            if (domain !== MAIN_URL) {
-              MAIN_URL = domain;
-              HEADERS.Referer = `${MAIN_URL}/`;
-            }
-            return results;
+      const watchLinks = extractHomepageWatchLinks(homeHtml);
+      if (watchLinks.length > 0) {
+        const matchingLinks = watchLinks.filter(link => {
+          const score = calculateTitleSimilarity(query, link.title);
+          return score > 0.2 || link.title.toLowerCase().includes(query.toLowerCase());
+        });
+        if (matchingLinks.length > 0) {
+          console.log(`[TamilMV] Found ${matchingLinks.length} matching links on homepage`);
+          for (const wl of matchingLinks) {
+            results.push({
+              title: wl.title,
+              url: wl.watchUrl.startsWith('http') ? wl.watchUrl : domain + (wl.watchUrl.startsWith('/') ? '' : '/') + wl.watchUrl,
+              topicUrl: wl.topicUrl ? (wl.topicUrl.startsWith('http') ? wl.topicUrl : domain + (wl.topicUrl.startsWith('/') ? '' : '/') + wl.topicUrl) : null
+            });
           }
-          if (watchLinks.length > 0) {
-            for (const wl of watchLinks.slice(0, 20)) {
-              results.push({
-                title: wl.title,
-                url: wl.watchUrl.startsWith('http') ? wl.watchUrl : domain + (wl.watchUrl.startsWith('/') ? '' : '/') + wl.watchUrl,
-                topicUrl: wl.topicUrl ? (wl.topicUrl.startsWith('http') ? wl.topicUrl : domain + (wl.topicUrl.startsWith('/') ? '' : '/') + wl.topicUrl) : null
-              });
-            }
+          if (domain !== MAIN_URL) {
+            MAIN_URL = domain;
+            HEADERS.Referer = `${MAIN_URL}/`;
+          }
+          return results;
+        }
+        if (watchLinks.length > 0) {
+          for (const wl of watchLinks.slice(0, 20)) {
+            results.push({
+              title: wl.title,
+              url: wl.watchUrl.startsWith('http') ? wl.watchUrl : domain + (wl.watchUrl.startsWith('/') ? '' : '/') + wl.watchUrl,
+              topicUrl: wl.topicUrl ? (wl.topicUrl.startsWith('http') ? wl.topicUrl : domain + (wl.topicUrl.startsWith('/') ? '' : '/') + wl.topicUrl) : null
+            });
           }
         }
       }
