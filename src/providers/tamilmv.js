@@ -1,6 +1,6 @@
 /**
  * tamilmv - Built from src/tamilmv/
- * Generated: 2026-07-11T11:32:14.647Z
+ * Generated: 2026-07-11T11:47:47.035Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -582,7 +582,7 @@ function extractHomepageWatchLinks(html) {
 function searchTamilMV(query, year = null) {
   return __async(this, null, function* () {
     const results = [];
-    let domainsToTry = [MAIN_URL, ...POTENTIAL_DOMAINS.filter((d) => d !== MAIN_URL)];
+    const domainsToTry = [MAIN_URL];
     for (const domain of domainsToTry) {
       try {
         console.log(`[TamilMV] Trying domain: ${domain}`);

@@ -474,7 +474,7 @@ function extractHomepageWatchLinks(html) {
 
 async function searchTamilMV(query, year = null) {
   const results = [];
-  let domainsToTry = [MAIN_URL, ...POTENTIAL_DOMAINS.filter(d => d !== MAIN_URL)];
+  const domainsToTry = [MAIN_URL];
 
   for (const domain of domainsToTry) {
     try {
