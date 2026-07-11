@@ -17,7 +17,12 @@ const FILE_HOST_PATTERNS = [
     /vcloud\.zip/i, /filebee\.xyz/i, /filepress/i,
     /fastdl\.zip/i, /busycdn\.xyz/i, /fastcdn-dl/i,
     /goflix\.sbs/i, /nexdrive/i,
-    /pub-[a-z0-9]+\.r2\.dev/i
+    /pub-[a-z0-9]+\.r2\.dev/i,
+    /gamerxyt\.com/i,
+    /cdn\.fsl-buckets\.life/i,
+    /fsl\.gigabytes\.icu/i,
+    /cdn\.fukggl\.buzz/i,
+    /hubcloud\.fans/i
 ];
 
 const SKIP_HOST_PATTERNS = [
@@ -26,7 +31,8 @@ const SKIP_HOST_PATTERNS = [
     /w3\.org/i, /googletagmanager/i, /fonts\.googleapis/i,
     /gstatic/i, /gravatar\.com/i, /linkedin/i, /instagram/i,
     /youtube/i, /github/i, /wordpress/i, /litespeed/i,
-    /megaup\.net/i, /gofile\.io/i, /vikingfile/i
+    /megaup\.net/i, /gofile\.io/i, /vikingfile/i,
+    /gdflix\.(dev|app)/i
 ];
 
 async function fetchWithTimeout(url, options = {}, timeout = 10000) {
@@ -188,8 +194,14 @@ async function smartExtract(url, depth = 0, maxDepth = 2, visited = new Set()) {
         if (!ct.includes('text/html') && !ct.includes('application/json')) return streams;
 
         const html = await res.text();
+        let directUrls = extractDirectVideoUrls(html);
 
-        const directUrls = extractDirectVideoUrls(html);
+        const anchorVideos = extractExternalLinks(html, url)
+          .filter(l => /\.(mp4|mkv|webm|m3u8)(\?|$)/i.test(l));
+        for (const u of anchorVideos) {
+          if (!directUrls.includes(u)) directUrls = [...directUrls, u];
+        }
+
         for (const u of directUrls) {
             if (!visited.has(u)) {
                 visited.add(u);

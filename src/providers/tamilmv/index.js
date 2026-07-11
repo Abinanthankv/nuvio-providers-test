@@ -35,7 +35,10 @@ const FILE_HOST_PATTERNS = [
   /hubcloud/i, /gdxcloud/i, /vcloud\.zip/i, /filebee\.xyz/i,
   /filepress/i, /fastdl\.zip/i, /busycdn\.xyz/i, /fastcdn-dl/i,
   /goflix\.sbs/i, /nexdrive/i,
-  /pub-[a-z0-9]+\.r2\.dev/i
+  /pub-[a-z0-9]+\.r2\.dev/i,
+  /gamerxyt\.com/i,
+  /cdn\.fsl-buckets\.life/i,
+  /hubcloud\.fans/i
 ];
 
 const SKIP_HOST_PATTERNS = [
@@ -44,7 +47,8 @@ const SKIP_HOST_PATTERNS = [
   /w3\.org/i, /googletagmanager/i, /fonts\.googleapis/i,
   /gstatic/i, /gravatar/i, /linkedin/i, /instagram/i,
   /youtube/i, /github/i, /wordpress/i, /litespeed/i,
-  /megaup/i, /gofile/i, /vikingfile/i
+  /megaup/i, /gofile/i, /vikingfile/i,
+  /gdflix\.(dev|app)/i
 ];
 
 async function fetchWithTimeout(url, options = {}, timeout = 10000) {
@@ -339,7 +343,9 @@ async function extractMagnetLinks(topicUrl) {
 const DIRECT_HOST_PATTERNS = [
   /mdrive\.(buzz|ink)/i, /gdflix\.(dev|app)/i,
   /pub-[a-z0-9]+\.r2\.dev/i, /goflix\.sbs/i,
-  /filepress/i, /nexdrive/i, /hubcloud/i
+  /filepress/i, /nexdrive/i, /hubcloud/i,
+  /gamerxyt\.com/i,
+  /cdn\.fsl-buckets\.life/i
 ];
 
 async function extractTopicDirectLinks(topicUrl) {
