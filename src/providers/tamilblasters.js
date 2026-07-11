@@ -1,11 +1,877 @@
 /**
  * tamilblasters - Built from src/tamilblasters/
- * Generated: 2026-07-11T11:09:01.096Z
+ * Generated: 2026-07-11T11:32:14.638Z
  */
-var $e=Object.defineProperty,Te=Object.defineProperties;var Ee=Object.getOwnPropertyDescriptors;var ue=Object.getOwnPropertySymbols;var Se=Object.prototype.hasOwnProperty,Me=Object.prototype.propertyIsEnumerable;var fe=(e,s,t)=>s in e?$e(e,s,{enumerable:!0,configurable:!0,writable:!0,value:t}):e[s]=t,D=(e,s)=>{for(var t in s||(s={}))Se.call(s,t)&&fe(e,t,s[t]);if(ue)for(var t of ue(s))Me.call(s,t)&&fe(e,t,s[t]);return e},q=(e,s)=>Te(e,Ee(s));var E=(e,s,t)=>new Promise((r,a)=>{var l=i=>{try{m(t.next(i))}catch(o){a(o)}},g=i=>{try{m(t.throw(i))}catch(o){a(o)}},m=i=>i.done?r(i.value):Promise.resolve(i.value).then(l,g);m((t=t.apply(e,s)).next())});var ge=require("cheerio-without-node-native"),he="1b3113663c9004682ed61086cf967c44",pe="https://api.themoviedb.org/3",ee=["https://www.1tamilblasters.pro","https://www.1tamilblasters.company","https://www.1tamilblasters.asia","https://www.1tamilblasters.ws","https://www.1tamilblasters.rocks","https://www.1tamilblasters.net","https://www.1tamilblasters.com"],$=ee[0],L={"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",Referer:`${$}/`};function ve(){return E(this,null,function*(){console.log("[Tamilblasters] Checking for a working domain...");let e=ee.map(s=>E(this,null,function*(){try{if((yield x(s,{method:"HEAD"},5e3)).ok||(yield x(s,{method:"GET"},5e3)).ok)return s}catch(t){}return null}));for(let s of e){let t=yield s;if(t)return console.log(`[Tamilblasters] Found working domain: ${t}`),t}return ee[0]})}function x(r){return E(this,arguments,function*(e,s={},t=1e4){return Promise.race([fetch(e,D({},s)),new Promise((a,l)=>setTimeout(()=>l(new Error(`Timeout after ${t}ms`)),t))])})}function oe(t){return E(this,arguments,function*(e,s={}){try{let r=yield x(e,{method:"GET",headers:q(D({},s),{Range:"bytes=0-0"})},5e3);return r.ok||r.status===206}catch(r){return!1}})}function ke(e){return e?e.replace(/\w\S*/g,s=>s.charAt(0).toUpperCase()+s.substr(1).toLowerCase()):""}function me(e){return e?e.toLowerCase().replace(/[^a-z0-9\s]/g,"").replace(/\s+/g," ").trim():""}function Ue(e,s){let t=me(e),r=me(s);if(t===r)return 1;if(t.includes(r)||r.includes(t))return .9;let a=new Set(t.split(/\s+/).filter(i=>i.length>2)),l=new Set(r.split(/\s+/).filter(i=>i.length>2));if(a.size===0||l.size===0)return 0;let g=new Set([...a].filter(i=>l.has(i))),m=new Set([...a,...l]);return g.size/m.size}function Re(e,s,t,r){for(;t--;)if(r[t]){let a=t.toString(s);e=e.replace(new RegExp("\\b"+a+"\\b","g"),r[t])}return e}function Le(e,s){if(!s||s.length===0)return[];let t=e.title.toLowerCase().replace(/[^a-z0-9]/g,""),r=e.year?parseInt(e.year):null,a=[];for(let l of s){let g=l.title.toLowerCase().replace(/[^a-z0-9]/g,""),m=Ue(e.title,l.title),i=g.includes(t),o=!r||l.title.includes(r.toString())||l.title.includes((r+1).toString())||l.title.includes((r-1).toString());i&&o&&(m+=.5),m>.4&&(console.log(`[Tamilblasters] Match found: "${l.title}" (score: ${m.toFixed(2)})`),a.push(l))}return a}function Ce(e,s){let{title:t,year:r}=e,{quality:a,type:l,size:g,language:m,seasonCode:i,episodeCode:o,label:u,baseTitle:n}=s,f=t.toLowerCase()===n.toLowerCase()||t===t.toLowerCase()?n:t,w=r||s.year,p=w?` (${w})`:"",d=!!(i||o),k=`\u{1F4FC}: ${f}${p}`;d?k+=` - ${i||"S01"} ${o||""}`:u&&!u.includes("Stream")&&(k+=` (${u})`),k+=` - ${a!=="Unknown"?a:""}`;let K=l&&l!=="UNKNOWN"?`\u{1F4FA}: ${l}
-`:"",z=g&&g!=="UNKNOWN"?`\u{1F4BE}: ${g} | \u{1F69C}: tamilblasters
-`:"",X=m||"TAMIL";return s.audioInfo&&(X=s.audioInfo),`Tamilblasters (Instant) (${a})
-${K}${k}
-${z}\u{1F310}: ${X.toUpperCase()}`}function Pe(e,s){return E(this,null,function*(){let r=`${pe}/${s==="movie"?"movie":"tv"}/${e}?api_key=${he}`;try{let l=yield(yield x(r,{},8e3)).json(),g={title:l.title||l.name,year:(l.release_date||l.first_air_date||"").split("-")[0]};return console.log(`[Tamilblasters] TMDB Info: "${g.title}" (${g.year||"N/A"})`),g}catch(a){throw console.error("[Tamilblasters] Error fetching TMDB metadata:",a.message),a}})}function Ae(e){return E(this,null,function*(){var s,t;try{let r=`${pe}/find/${e}?api_key=${he}&external_source=imdb_id`,l=yield(yield x(r,{},8e3)).json(),g=(s=l.movie_results)==null?void 0:s[0],m=(t=l.tv_results)==null?void 0:t[0];if(g){let i={title:g.title,year:(g.release_date||"").split("-")[0]};return console.log(`[Tamilblasters] IMDb ${e} -> Movie: "${i.title}" (${i.year||"N/A"})`),i}if(m){let i={title:m.name,year:(m.first_air_date||"").split("-")[0]};return console.log(`[Tamilblasters] IMDb ${e} -> TV: "${i.title}" (${i.year||"N/A"})`),i}return console.log(`[Tamilblasters] IMDb ${e} not found on TMDB`),null}catch(r){return console.error(`[Tamilblasters] Error resolving IMDb ID ${e}:`,r.message),null}})}function De(e){return E(this,null,function*(){let s=[$,...ee.filter(r=>r!==$)],t=null;for(let r of s){let a=`${r}/?s=${encodeURIComponent(e)}`;console.log(`[Tamilblasters] Searching: ${a}`);try{let l=yield x(a,{headers:q(D({},L),{Referer:`${r}/`})},8e3);r!==$&&(console.log(`[Tamilblasters] Rotating to working domain: ${r}`),$=r,L.Referer=`${$}/`);let g=yield l.text(),m=ge.load(g),i=[];if(m(".posts-wrapper article, .nv-index-posts article").each((o,u)=>{let n=m(u).find("h2.entry-title a"),f=n.text().trim(),w=n.attr("href");f&&w&&i.push({title:f,href:w})}),i.length>0||g.includes("nothing found")||g.includes("no results"))return i;console.log(`[Tamilblasters] No results on ${r}, but no error. Continuing...`)}catch(l){console.error(`[Tamilblasters] Search error on ${r}:`,l.message),t=l}}return[]})}function xe(e){return E(this,null,function*(){try{let t=yield(yield x(e,{headers:q(D({},L),{Referer:$})},5e3)).text();if(!t.includes("#EXTM3U"))return{variants:[{url:e,quality:"Unknown"}],audios:[],isMaster:!1,masterUrl:e};let r=[],a=[],l=!1,g=t.matchAll(/#EXT-X-MEDIA:TYPE=AUDIO.*?NAME="([^"]+)"(?:.*?CHANNELS="([^"]+)")?/g);for(let o of g){let u=o[1],n=o[2];n&&(u+=` (${{1:"1.0",2:"2.0",6:"5.1",8:"7.1"}[n]||n})`),a.includes(u)||a.push(u)}if(t.includes("#EXT-X-STREAM-INF")){l=!0;let o=t.split(`
-`);for(let u=0;u<o.length;u++){let n=o[u].trim();if(n.includes("#EXT-X-STREAM-INF")){let f="Unknown",w=n.match(/RESOLUTION=(\d+)x(\d+)/i);if(w){let d=parseInt(w[2]);d>=2160?f="4K":d>=1080?f="1080p":d>=720?f="720p":d>=480?f="480p":f=`${d}p`}let p=u+1;for(;p<o.length&&(o[p].trim().startsWith("#")||!o[p].trim());)p++;if(p<o.length){let d=o[p].trim();d&&!d.startsWith("#")&&(d.startsWith("http")||(d=e.substring(0,e.lastIndexOf("/")+1)+d),r.push({url:d,quality:f}))}u=p}}}if(r.length>0){let o={"4K":2160,"1080p":1080,"720p":720,"480p":480,Unknown:0};return r.sort((u,n)=>(o[n.quality]||0)-(o[u.quality]||0)),{variants:r,audios:a,isMaster:l,masterUrl:e}}let m=t.match(/\b(2160p|1080p|720p|480p|4K|UHD|HD)\b/i),i=m?m[0]:"Unknown";return{variants:[{url:e,quality:i}],audios:a,isMaster:!1,masterUrl:e}}catch(s){return console.error(`[Tamilblasters] Error detecting quality: ${s.message}`),{variants:[{url:e,quality:"Unknown"}],audios:[],isMaster:!1,masterUrl:e}}})}function Ne(e){return E(this,null,function*(){try{console.log(`[Tamilblasters] Embed URL: ${e}`);let t=new URL(e).hostname.toLowerCase();return console.log(`[Tamilblasters] Attempting universal extraction from: ${t}`),yield qe(e,t)}catch(s){return console.error(`[Tamilblasters] Extraction error: ${s.message}`),[]}})}function qe(e,s){return E(this,null,function*(){try{let t=new URL(e).origin,a=yield(yield x(e,{headers:q(D({},L),{Referer:$})},5e3)).text();if(a.includes("<title>Loading...</title>")||a.includes("Page is loading")){console.log(`[Tamilblasters] Detected landing page on ${s}, finding mirrors...`);let i=[/["']([^"']+\.(?:yuguaab|cavanhabg|vibuxer|yuguaabpro|hgcloud|streamtape|doedly|akamaized|mcloud)[^"']+)["']/gi,/(?:href|src|url)\s*[=:]\s*["']([^"']*hgcloud[^"']*)["']/gi,/window\.location\.href\s*=\s*["']([^"']+)["']/gi,/(?:redirect|go|nav|load)\s*\(\s*["']([^"']+)["']\s*\)/gi],o=new Set;for(let f of i){let w=a.match(f);if(w)for(let p of w){let d=p.match(/https?:\/\/([^"\/\s]+)/);if(d){let k=d[1];k!==s&&!k.includes(s)&&o.add(k)}}}let u=["yuguaab.com","cavanhabg.com","vibuxer.com","yuguaab.pro","streamtape.com","doedly.com","voe.sx","vidhide.com","vidoza.net","upstream.to","dood.li","dood.la","dood.so","dood.to","waaw.to","mixdrop.co"],n=Array.from(o);n.length===0&&(n=u.filter(f=>!s.includes(f))),console.log(`[Tamilblasters] Found mirrors: ${n.join(", ")}`);for(let f of n.slice(0,5))try{let w=e.replace(s,f),d=yield(yield x(w,{headers:q(D({},L),{Referer:$})},4e3)).text();if(d.includes("jwplayer")||d.includes("sources")||d.includes(".m3u8")||d.includes("eval(function(p,a,c,k,e,d)")){console.log(`[Tamilblasters] Found working mirror: ${f}`),a=d;break}}catch(w){console.log(`[Tamilblasters] Mirror ${f} failed: ${w.message}`)}}let l=a.match(new RegExp("eval\\(function\\(p,a,c,k,e,d\\)\\{.*?\\}\\s*\\((.*)\\)\\s*\\)","s"));if(l){let o=l[1].trim().match(new RegExp("^'(.*)',\\s*(\\d+),\\s*(\\d+),\\s*'(.*?)'\\.split\\(","s"));if(o){let u=Re(o[1],parseInt(o[2]),parseInt(o[3]),o[4].split("|"));a+=`
-`+u}}let g=[/["']hls[2-4]["']\s*:\s*["']([^"']+)["']/gi,/sources\s*:\s*\[\s*{\s*file\s*:\s*["']([^"']+)["']/gi,/https?:\/\/[^\s"']+\.m3u8[^\s"']*/gi,/["'](\/[^\s"']+\.m3u8[^\s"']*)["']/gi,/https?:\/\/[^\s"']+\.mp4[^\s"']*/gi,/(?:source|file|src)\s*[:=]\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)["']/gi],m=[];for(let i of g){let o=a.match(i);if(o)for(let u of o){let n=u,f=u.match(/["']:[ ]*["']([^"']+)["']/);if(f)n=f[1];else{let p=u.match(/["']([^"']+)["']/);p&&(n=p[1])}let w=n.match(/https?:\/\/[^\s"']+/);w&&(n=w[0]),n=n.replace(/[\\"'\)\]]+$/,""),!(!n||n.length<5||n.includes("google.com")||n.includes("youtube.com"))&&(n.startsWith("/")&&!n.startsWith("//")&&(n=t+n),m.push(n))}}if(m.length>0){m.sort((o,u)=>{let n=o.includes("?"),f=u.includes("?");if(n!==f)return f?1:-1;let w=o.toLowerCase().includes(".m3u8"),p=u.toLowerCase().includes(".m3u8");return w!==p?p?1:-1:o.length-u.length});let i=m[0];try{console.log(`[Tamilblasters] Detected best URL: ${i}. Resolving quality...`);let o=yield Promise.race([xe(i),new Promise(u=>setTimeout(()=>u(null),3e3))]);if(o)return o;console.log(`[Tamilblasters] Quality resolution timed out for ${i}, using default.`)}catch(o){console.log(`[Tamilblasters] Quality resolution failed: ${o.message}`)}return{variants:[{url:i,quality:"Unknown"}],audios:[],isMaster:!1,masterUrl:i}}return[]}catch(t){return console.error(`[Tamilblasters] Error extracting from ${s}: ${t.message}`),[]}})}function de(e,s="movie",t=null,r=null){return E(this,null,function*(){console.log(`[Tamilblasters] Processing ${s} ${e}`);try{let a,l=e.match(/^[Tt][Tt]?(\d+)$/);if(l)a=yield Ae(l[0]),a||(console.log(`[Tamilblasters] IMDb resolve failed for "${e}", using as-is`),a={title:e,year:null});else{let c=e.replace(/^[^\d]+/,"");if(/^\d+$/.test(c))try{a=yield Pe(c,s)}catch(F){console.log(`[Tamilblasters] TMDB fetch failed for ID ${c}, using "${e}" as search query`),a={title:e,year:null}}else console.log(`[Tamilblasters] Using "${e}" as search query indirectly`),a={title:ke(e),year:null}}try{let c=yield ve();c!==$&&(console.log(`[Tamilblasters] Switching MAIN_URL: ${$} -> ${c}`),$=c,L.Referer=`${$}/`)}catch(c){console.log(`[Tamilblasters] Domain discovery failed: ${c.message}`)}let g=yield De(a.title),m=Le(a,g);if(m.length===0)return console.warn("[Tamilblasters] No matching titles found in search results"),[];let i=[],o=new Set;for(let c of m)o.has(c.href)||(o.add(c.href),i.push(c));let u=i.slice(0,3);console.log(`[Tamilblasters] Processing top ${u.length} unique matches out of ${m.length} total`);let n=[],f=20,w=2,p=new Set,d=!1,k=c=>E(this,null,function*(){var M;if(!(n.length>=f||d)){console.log(`[Tamilblasters] Processing match: ${c.title} -> ${c.href}`);try{let G=yield(yield x(c.href,{headers:L},8e3)).text(),C=ge.load(G),Q=C("h1.entry-title").text().trim()||c.title;console.log(`[Tamilblasters] Full Page Title: ${Q}`);let O=[],I=c.title,Y=I.match(/[\(\[](\d{4})[\)\]]/),ne=I,ie="",le="Original";Y&&(ie=Y[1],ne=I.split(Y[0])[0].trim(),le=((M=I.split(Y[0])[1])==null?void 0:M.trim())||"Original");let te=C("iframe");te.length===0&&(te=C("*").filter((S,h)=>h.tagName&&h.tagName.toLowerCase()==="iframe")),te.each((S,h)=>{let U=C(h).attr("src");if(!U||U.includes("google.com")||U.includes("youtube.com"))return;let T="",b=C(h);for(let v=0;v<5;v++){let A=b.prev();if(A.length===0){if(b=b.parent(),b.is("body")||b.length===0)break;continue}let _=A.text().trim();if(_.toLowerCase().includes("episode")){T=_.replace(/[\r\n]+/g," ").trim();break}b=A}let y=T||C(h).closest("div").prev("p").text().trim()||C(h).parent().text().trim().substring(0,50)||"Stream "+(S+1);if(y.toLowerCase().includes("episode")||y.match(/EP\s*\d+/i)){let v=y.match(/(?:Episode|EP)\s*[–-ー]?\s*(\d+)/i);v&&(y=`EP${v[1]}`)}let N=s==="tv"||I.match(/S\d+.*EP/i)||I.match(/Season.*Episode/i)||y.match(/EP\s*\d+/i)||y.match(/Episode\s*\d+/i),Z="",V="",W=le;if(N){let v=I.match(/S(\d+)/i);Z=v?`S${v[1].padStart(2,"0")}`:"S01";let A=null,_=y.match(/EP\s*(\d+)/i)||y.match(/Episode\s*(\d+)/i);if(_)A=_[1];else{let ae=I.match(/EP\s*(\d+)/i);ae&&(A=ae[1])}V=A?`E${A.padStart(2,"0")}`:y,W=W.replace(/S\d+/gi,"").replace(/EP\s*\(.*?\)/gi,"").replace(/EP\d+/gi,"").replace(/\s+/g," ").trim(),W=W.replace(/^[-\s,[\]]+|[-\s,[\]]+$/g,"").trim()}let P="UNKNOWN",R=(Q+" "+y).toLowerCase();R.includes("bluray")||R.includes("brrip")?P="BluRay":R.includes("web-dl")||R.includes("webdl")?P="WEB-DL":R.includes("webrip")?P="WEBRip":R.includes("hdrip")?P="HDRip":R.includes("dvdrip")&&(P="DVDRip"),O.push({baseTitle:ne,year:ie,language:W,seasonCode:Z,episodeCode:V,type:P,url:U,label:y,matchTitle:c.title})});let B=O;if(r!==null){let S=parseInt(r),h=`E${S.toString().padStart(2,"0")}`,U=new RegExp(`\\b(EP|EPISODE|E)\\s*0*${S}\\b`,"i");B=O.filter(T=>{let b=T.label.toUpperCase(),y=T.episodeCode.toUpperCase();if(U.test(b)||y===h)return!0;let N=y.match(/E(\d+)/i);return!!(N&&parseInt(N[1])===S)}),B.length===0&&(console.log(`[Tamilblasters] No specific iframes matched episode ${r} labels, processing first 10 as fallback.`),B=O)}let se=r!==null,ce=B.slice(0,se?40:10);B.length>(se?40:10)&&console.log(`[Tamilblasters] Limiting to first ${se?40:10} matching iframes out of ${B.length} for performance`),console.log(`[Tamilblasters] Extracting direct streams from ${ce.length} embed URLs for "${c.title}"...`);let re=[],J=new Set,be=5,j=new Set,ye=S=>E(this,null,function*(){if(!(n.length>=f||d))try{let h=yield Promise.race([Ne(S.url),new Promise((U,T)=>setTimeout(()=>T(new Error("Extraction timeout after 15 seconds")),15e3))]);if(h&&h.variants&&h.variants.length>0){let U=h.audios.length>0?h.audios.join(", "):"";if(h.isMaster&&h.audios.length>1){let T=h.variants[0].quality,b=q(D({},S),{url:h.masterUrl,quality:T,audioInfo:U,isMaster:!0});(yield oe(b.url,{Referer:$,"User-Agent":L["User-Agent"]}))&&!J.has(b.url)&&(J.add(b.url),re.push(b))}else for(let T of h.variants){let b=q(D({},S),{url:T.url,quality:T.quality,audioInfo:U,isMaster:!1});(yield oe(b.url,{Referer:$,"User-Agent":L["User-Agent"]}))&&!J.has(b.url)&&(J.add(b.url),re.push(b))}}}catch(h){console.error(`[Tamilblasters] Failed to extract stream: ${h.message}`)}});for(let S of ce){if(n.length>=f||d)break;let h=ye(S).then(()=>j.delete(h));j.add(h),j.size>=be&&(yield Promise.race(j))}yield Promise.all(j);let H=re;if(t!==null||r!==null){let S=r!==null?`EP${r.toString().padStart(2,"0")}`:null,h=r!==null?`e${r.toString().padStart(2,"0")}`:null,U=r!==null?`e ${r.toString().padStart(2,"0")}`:null,T=t!==null?`S${t.toString().padStart(2,"0")}`:null,b=t!==null?`s${t.toString().padStart(2,"0")}`:null;if(!T||c.title.toUpperCase().includes(T)||c.title.toLowerCase().includes(b)){let N=parseInt(r),Z=`E${N.toString().padStart(2,"0")}`,V=new RegExp(`\\b(EP|EPISODE|E)\\s*0*${N}\\b`,"i"),W=H.filter(P=>{if(isNaN(N))return!0;let R=P.label.toUpperCase(),v=P.episodeCode.toUpperCase(),A=(P.matchTitle||"").toUpperCase();if(V.test(R)||v===Z)return!0;let _=v.match(/E(\d+)/i);return _&&parseInt(_[1])===N?!0:R.includes("EP")||R.includes("E")||/\d+/.test(v)?!1:V.test(A)});H=W,W.length>0?console.log(`[Tamilblasters] Filtered to ${H.length} streams for episode ${r}`):console.log(`[Tamilblasters] No streams found matching epsiode ${r}`)}else H=[]}H.length>0&&n.push(...H),n.length>=f&&(d=!0)}catch(F){console.error(`[Tamilblasters] Failed to process match ${c.title}:`,F.message)}}});for(let c of u){if(n.length>=f||d)break;let M=k(c).then(()=>p.delete(M));p.add(M),p.size>=w&&(yield Promise.race(p))}yield Promise.all(p),console.log(`[Tamilblasters] Final validation of ${n.length} candidate streams...`);let K=[],z=new Set,X=5,we=c=>E(this,null,function*(){try{if(yield oe(c.url,{Referer:$,"User-Agent":L["User-Agent"]})){let F=c.quality||"Unknown",G="UNKNOWN";if(c.matchTitle&&F!=="Unknown"){let Q=new RegExp(`${F}\\s*[\\[\\(]([^\\]\\)]+)[\\]\\)]`,"i"),O=c.matchTitle.match(Q);O&&(G=O[1].toUpperCase())}let C=q(D({},c),{quality:F,size:G});K.push({name:"Tamilblasters",title:Ce(a,C),url:c.url,quality:C.quality,headers:{Referer:$,"User-Agent":L["User-Agent"]},provider:"Tamilblasters"})}}catch(M){console.error(`[Tamilblasters] Validation failed for ${c.url}:`,M.message)}});for(let c of n){let M=we(c).then(()=>z.delete(M));z.add(M),z.size>=X&&(yield Promise.race(z))}return yield Promise.all(z),console.log(`[Tamilblasters] Returning ${K.length} valid streams out of ${n.length} candidates`),K}catch(a){return console.error("[Tamilblasters] getStreams failed:",a.message),[]}})}typeof module!="undefined"&&module.exports?module.exports={getStreams:de}:global.getStreams={getStreams:de};
+var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __spreadValues = (a, b) => {
+  for (var prop in b || (b = {}))
+    if (__hasOwnProp.call(b, prop))
+      __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b)) {
+      if (__propIsEnum.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    }
+  return a;
+};
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+var __async = (__this, __arguments, generator) => {
+  return new Promise((resolve, reject) => {
+    var fulfilled = (value) => {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var rejected = (value) => {
+      try {
+        step(generator.throw(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    step((generator = generator.apply(__this, __arguments)).next());
+  });
+};
+
+// src/providers/tamilblasters/index.js
+var cheerio = require("cheerio-without-node-native");
+var TMDB_API_KEY = "1b3113663c9004682ed61086cf967c44";
+var TMDB_BASE_URL = "https://api.themoviedb.org/3";
+var POTENTIAL_DOMAINS = [
+  "https://www.1tamilblasters.pro",
+  "https://www.1tamilblasters.company",
+  "https://www.1tamilblasters.asia",
+  "https://www.1tamilblasters.ws",
+  "https://www.1tamilblasters.rocks",
+  "https://www.1tamilblasters.net",
+  "https://www.1tamilblasters.com"
+];
+var MAIN_URL = POTENTIAL_DOMAINS[0];
+var HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+  "Referer": `${MAIN_URL}/`
+};
+function getReadyDomain() {
+  return __async(this, null, function* () {
+    console.log("[Tamilblasters] Checking for a working domain...");
+    const checks = POTENTIAL_DOMAINS.map((domain) => __async(this, null, function* () {
+      try {
+        const response = yield fetchWithTimeout(domain, { method: "HEAD" }, 5e3);
+        if (response.ok)
+          return domain;
+        const getResponse = yield fetchWithTimeout(domain, { method: "GET" }, 5e3);
+        if (getResponse.ok)
+          return domain;
+      } catch (e) {
+      }
+      return null;
+    }));
+    for (const check of checks) {
+      const workingDomain = yield check;
+      if (workingDomain) {
+        console.log(`[Tamilblasters] Found working domain: ${workingDomain}`);
+        return workingDomain;
+      }
+    }
+    return POTENTIAL_DOMAINS[0];
+  });
+}
+function fetchWithTimeout(_0) {
+  return __async(this, arguments, function* (url, options = {}, timeout = 1e4) {
+    return Promise.race([
+      fetch(url, __spreadValues({}, options)),
+      new Promise(
+        (_, reject) => setTimeout(() => reject(new Error(`Timeout after ${timeout}ms`)), timeout)
+      )
+    ]);
+  });
+}
+function checkLink(_0) {
+  return __async(this, arguments, function* (url, headers = {}) {
+    try {
+      const response = yield fetchWithTimeout(url, {
+        method: "GET",
+        headers: __spreadProps(__spreadValues({}, headers), {
+          "Range": "bytes=0-0"
+        })
+      }, 5e3);
+      return response.ok || response.status === 206;
+    } catch (error) {
+      return false;
+    }
+  });
+}
+function toTitleCase(str) {
+  if (!str)
+    return "";
+  return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+}
+function normalizeTitle(title) {
+  if (!title)
+    return "";
+  return title.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
+}
+function calculateTitleSimilarity(title1, title2) {
+  const norm1 = normalizeTitle(title1);
+  const norm2 = normalizeTitle(title2);
+  if (norm1 === norm2)
+    return 1;
+  if (norm1.includes(norm2) || norm2.includes(norm1))
+    return 0.9;
+  const words1 = new Set(norm1.split(/\s+/).filter((w) => w.length > 2));
+  const words2 = new Set(norm2.split(/\s+/).filter((w) => w.length > 2));
+  if (words1.size === 0 || words2.size === 0)
+    return 0;
+  const intersection = new Set([...words1].filter((w) => words2.has(w)));
+  const union = /* @__PURE__ */ new Set([...words1, ...words2]);
+  return intersection.size / union.size;
+}
+function unpack(p, a, c, k) {
+  while (c--) {
+    if (k[c]) {
+      const placeholder = c.toString(a);
+      p = p.replace(new RegExp("\\b" + placeholder + "\\b", "g"), k[c]);
+    }
+  }
+  return p;
+}
+function findAllTitleMatches(mediaInfo, searchResults) {
+  if (!searchResults || searchResults.length === 0)
+    return [];
+  const targetTitle = mediaInfo.title.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const targetYear = mediaInfo.year ? parseInt(mediaInfo.year) : null;
+  const matches = [];
+  for (const result of searchResults) {
+    const normalizedResultTitle = result.title.toLowerCase().replace(/[^a-z0-9]/g, "");
+    let score = calculateTitleSimilarity(mediaInfo.title, result.title);
+    const titleMatch = normalizedResultTitle.includes(targetTitle);
+    const yearMatch = !targetYear || result.title.includes(targetYear.toString()) || result.title.includes((targetYear + 1).toString()) || result.title.includes((targetYear - 1).toString());
+    if (titleMatch && yearMatch) {
+      score += 0.5;
+    }
+    if (score > 0.4) {
+      console.log(`[Tamilblasters] Match found: "${result.title}" (score: ${score.toFixed(2)})`);
+      matches.push(result);
+    }
+  }
+  return matches;
+}
+function formatStreamTitle(mediaInfo, stream) {
+  const { title, year } = mediaInfo;
+  const { quality, type, size, language, seasonCode, episodeCode, label, baseTitle } = stream;
+  const displayTitle = title.toLowerCase() === baseTitle.toLowerCase() || title === title.toLowerCase() ? baseTitle : title;
+  const displayYear = year || stream.year;
+  const yearStr = displayYear ? ` (${displayYear})` : "";
+  const isTV = !!(seasonCode || episodeCode);
+  let tapeLine = `\u{1F4FC}: ${displayTitle}${yearStr}`;
+  if (isTV) {
+    tapeLine += ` - ${seasonCode || "S01"} ${episodeCode || ""}`;
+  } else if (label && !label.includes("Stream")) {
+    tapeLine += ` (${label})`;
+  }
+  tapeLine += ` - ${quality !== "Unknown" ? quality : ""}`;
+  const typeLine = type && type !== "UNKNOWN" ? `\u{1F4FA}: ${type}
+` : "";
+  const sizeLine = size && size !== "UNKNOWN" ? `\u{1F4BE}: ${size} | \u{1F69C}: tamilblasters
+` : "";
+  let lang = language || "TAMIL";
+  if (stream.audioInfo)
+    lang = stream.audioInfo;
+  return `Tamilblasters (Instant) (${quality})
+${typeLine}${tapeLine}
+${sizeLine}\u{1F310}: ${lang.toUpperCase()}`;
+}
+function getTMDBDetails(tmdbId, mediaType) {
+  return __async(this, null, function* () {
+    const type = mediaType === "movie" ? "movie" : "tv";
+    const url = `${TMDB_BASE_URL}/${type}/${tmdbId}?api_key=${TMDB_API_KEY}`;
+    try {
+      const response = yield fetchWithTimeout(url, {}, 8e3);
+      const data = yield response.json();
+      const info = {
+        title: data.title || data.name,
+        year: (data.release_date || data.first_air_date || "").split("-")[0]
+      };
+      console.log(`[Tamilblasters] TMDB Info: "${info.title}" (${info.year || "N/A"})`);
+      return info;
+    } catch (error) {
+      console.error("[Tamilblasters] Error fetching TMDB metadata:", error.message);
+      throw error;
+    }
+  });
+}
+function resolveImdbId(imdbId) {
+  return __async(this, null, function* () {
+    var _a, _b;
+    try {
+      const url = `${TMDB_BASE_URL}/find/${imdbId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
+      const response = yield fetchWithTimeout(url, {}, 8e3);
+      const data = yield response.json();
+      const movie = (_a = data.movie_results) == null ? void 0 : _a[0];
+      const tv = (_b = data.tv_results) == null ? void 0 : _b[0];
+      if (movie) {
+        const info = { title: movie.title, year: (movie.release_date || "").split("-")[0] };
+        console.log(`[Tamilblasters] IMDb ${imdbId} -> Movie: "${info.title}" (${info.year || "N/A"})`);
+        return info;
+      }
+      if (tv) {
+        const info = { title: tv.name, year: (tv.first_air_date || "").split("-")[0] };
+        console.log(`[Tamilblasters] IMDb ${imdbId} -> TV: "${info.title}" (${info.year || "N/A"})`);
+        return info;
+      }
+      console.log(`[Tamilblasters] IMDb ${imdbId} not found on TMDB`);
+      return null;
+    } catch (error) {
+      console.error(`[Tamilblasters] Error resolving IMDb ID ${imdbId}:`, error.message);
+      return null;
+    }
+  });
+}
+function search(query) {
+  return __async(this, null, function* () {
+    let domainsToTry = [MAIN_URL, ...POTENTIAL_DOMAINS.filter((d) => d !== MAIN_URL)];
+    let lastError = null;
+    for (const domain of domainsToTry) {
+      const url = `${domain}/?s=${encodeURIComponent(query)}`;
+      console.log(`[Tamilblasters] Searching: ${url}`);
+      try {
+        const response = yield fetchWithTimeout(url, { headers: __spreadProps(__spreadValues({}, HEADERS), { Referer: `${domain}/` }) }, 8e3);
+        if (domain !== MAIN_URL) {
+          console.log(`[Tamilblasters] Rotating to working domain: ${domain}`);
+          MAIN_URL = domain;
+          HEADERS.Referer = `${MAIN_URL}/`;
+        }
+        const html = yield response.text();
+        const $ = cheerio.load(html);
+        const results = [];
+        $(".posts-wrapper article, .nv-index-posts article").each((i, el) => {
+          const titleEl = $(el).find("h2.entry-title a");
+          const title = titleEl.text().trim();
+          const href = titleEl.attr("href");
+          if (title && href) {
+            results.push({ title, href });
+          }
+        });
+        if (results.length > 0 || html.includes("nothing found") || html.includes("no results")) {
+          return results;
+        }
+        console.log(`[Tamilblasters] No results on ${domain}, but no error. Continuing...`);
+      } catch (error) {
+        console.error(`[Tamilblasters] Search error on ${domain}:`, error.message);
+        lastError = error;
+      }
+    }
+    return [];
+  });
+}
+function detectQualityFromM3U8(m3u8Url) {
+  return __async(this, null, function* () {
+    try {
+      const response = yield fetchWithTimeout(m3u8Url, {
+        headers: __spreadProps(__spreadValues({}, HEADERS), {
+          "Referer": MAIN_URL
+        })
+      }, 5e3);
+      const content = yield response.text();
+      if (!content.includes("#EXTM3U")) {
+        return { variants: [{ url: m3u8Url, quality: "Unknown" }], audios: [], isMaster: false, masterUrl: m3u8Url };
+      }
+      const variants = [];
+      const audios = [];
+      let isMaster = false;
+      const audioMatches = content.matchAll(/#EXT-X-MEDIA:TYPE=AUDIO.*?NAME="([^"]+)"(?:.*?CHANNELS="([^"]+)")?/g);
+      for (const match of audioMatches) {
+        let audioName = match[1];
+        const channels = match[2];
+        if (channels) {
+          const channelMap = { "1": "1.0", "2": "2.0", "6": "5.1", "8": "7.1" };
+          audioName += ` (${channelMap[channels] || channels})`;
+        }
+        if (!audios.includes(audioName))
+          audios.push(audioName);
+      }
+      if (content.includes("#EXT-X-STREAM-INF")) {
+        isMaster = true;
+        const lines = content.split("\n");
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (line.includes("#EXT-X-STREAM-INF")) {
+            let quality2 = "Unknown";
+            const resMatch = line.match(/RESOLUTION=(\d+)x(\d+)/i);
+            if (resMatch) {
+              const height = parseInt(resMatch[2]);
+              if (height >= 2160)
+                quality2 = "4K";
+              else if (height >= 1080)
+                quality2 = "1080p";
+              else if (height >= 720)
+                quality2 = "720p";
+              else if (height >= 480)
+                quality2 = "480p";
+              else
+                quality2 = `${height}p`;
+            }
+            let j = i + 1;
+            while (j < lines.length && (lines[j].trim().startsWith("#") || !lines[j].trim()))
+              j++;
+            if (j < lines.length) {
+              let variantUrl = lines[j].trim();
+              if (variantUrl && !variantUrl.startsWith("#")) {
+                if (!variantUrl.startsWith("http")) {
+                  const baseUrl = m3u8Url.substring(0, m3u8Url.lastIndexOf("/") + 1);
+                  variantUrl = baseUrl + variantUrl;
+                }
+                variants.push({ url: variantUrl, quality: quality2 });
+              }
+            }
+            i = j;
+          }
+        }
+      }
+      if (variants.length > 0) {
+        const qualityWeights = { "4K": 2160, "1080p": 1080, "720p": 720, "480p": 480, "Unknown": 0 };
+        variants.sort((a, b) => (qualityWeights[b.quality] || 0) - (qualityWeights[a.quality] || 0));
+        return { variants, audios, isMaster, masterUrl: m3u8Url };
+      }
+      const qualityMatch = content.match(/\b(2160p|1080p|720p|480p|4K|UHD|HD)\b/i);
+      const quality = qualityMatch ? qualityMatch[0] : "Unknown";
+      return { variants: [{ url: m3u8Url, quality }], audios, isMaster: false, masterUrl: m3u8Url };
+    } catch (error) {
+      console.error(`[Tamilblasters] Error detecting quality: ${error.message}`);
+      return { variants: [{ url: m3u8Url, quality: "Unknown" }], audios: [], isMaster: false, masterUrl: m3u8Url };
+    }
+  });
+}
+function extractDirectStream(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      console.log(`[Tamilblasters] Embed URL: ${embedUrl}`);
+      const url = new URL(embedUrl);
+      const hostname = url.hostname.toLowerCase();
+      console.log(`[Tamilblasters] Attempting universal extraction from: ${hostname}`);
+      return yield extractFromGenericEmbed(embedUrl, hostname);
+    } catch (error) {
+      console.error(`[Tamilblasters] Extraction error: ${error.message}`);
+      return [];
+    }
+  });
+}
+function extractFromGenericEmbed(embedUrl, hostName) {
+  return __async(this, null, function* () {
+    try {
+      const embedBase = new URL(embedUrl).origin;
+      const response = yield fetchWithTimeout(embedUrl, {
+        headers: __spreadProps(__spreadValues({}, HEADERS), {
+          "Referer": MAIN_URL
+        })
+      }, 5e3);
+      let html = yield response.text();
+      if (html.includes("<title>Loading...</title>") || html.includes("Page is loading")) {
+        console.log(`[Tamilblasters] Detected landing page on ${hostName}, finding mirrors...`);
+        const mirrorPatterns = [
+          /["']([^"']+\.(?:yuguaab|cavanhabg|vibuxer|yuguaabpro|hgcloud|streamtape|doedly|akamaized|mcloud)[^"']+)["']/gi,
+          /(?:href|src|url)\s*[=:]\s*["']([^"']*hgcloud[^"']*)["']/gi,
+          /window\.location\.href\s*=\s*["']([^"']+)["']/gi,
+          /(?:redirect|go|nav|load)\s*\(\s*["']([^"']+)["']\s*\)/gi
+        ];
+        const foundMirrors = /* @__PURE__ */ new Set();
+        for (const pattern of mirrorPatterns) {
+          const matches = html.match(pattern);
+          if (matches) {
+            for (let match of matches) {
+              const urlMatch = match.match(/https?:\/\/([^"\/\s]+)/);
+              if (urlMatch) {
+                const domain = urlMatch[1];
+                if (domain !== hostName && !domain.includes(hostName)) {
+                  foundMirrors.add(domain);
+                }
+              }
+            }
+          }
+        }
+        const fallbackMirrors = [
+          "yuguaab.com",
+          "cavanhabg.com",
+          "vibuxer.com",
+          "yuguaab.pro",
+          "streamtape.com",
+          "doedly.com",
+          "voe.sx",
+          "vidhide.com",
+          "vidoza.net",
+          "upstream.to",
+          "dood.li",
+          "dood.la",
+          "dood.so",
+          "dood.to",
+          "waaw.to",
+          "mixdrop.co"
+        ];
+        let mirrors = Array.from(foundMirrors);
+        if (mirrors.length === 0) {
+          mirrors = fallbackMirrors.filter((m) => !hostName.includes(m));
+        }
+        console.log(`[Tamilblasters] Found mirrors: ${mirrors.join(", ")}`);
+        for (const mirror of mirrors.slice(0, 5)) {
+          try {
+            const mirrorUrl = embedUrl.replace(hostName, mirror);
+            const mirrorRes = yield fetchWithTimeout(mirrorUrl, { headers: __spreadProps(__spreadValues({}, HEADERS), { "Referer": MAIN_URL }) }, 4e3);
+            const mirrorHtml = yield mirrorRes.text();
+            if (mirrorHtml.includes("jwplayer") || mirrorHtml.includes("sources") || mirrorHtml.includes(".m3u8") || mirrorHtml.includes("eval(function(p,a,c,k,e,d)")) {
+              console.log(`[Tamilblasters] Found working mirror: ${mirror}`);
+              html = mirrorHtml;
+              break;
+            }
+          } catch (e) {
+            console.log(`[Tamilblasters] Mirror ${mirror} failed: ${e.message}`);
+          }
+        }
+      }
+      const packerMatch = html.match(new RegExp("eval\\(function\\(p,a,c,k,e,d\\)\\{.*?\\}\\s*\\((.*)\\)\\s*\\)", "s"));
+      if (packerMatch) {
+        const rawArgs = packerMatch[1].trim();
+        const pMatch = rawArgs.match(new RegExp("^'(.*)',\\s*(\\d+),\\s*(\\d+),\\s*'(.*?)'\\.split\\(", "s"));
+        if (pMatch) {
+          const unpacked = unpack(pMatch[1], parseInt(pMatch[2]), parseInt(pMatch[3]), pMatch[4].split("|"));
+          html += "\n" + unpacked;
+        }
+      }
+      const patterns = [
+        /["']hls[2-4]["']\s*:\s*["']([^"']+)["']/gi,
+        /sources\s*:\s*\[\s*{\s*file\s*:\s*["']([^"']+)["']/gi,
+        /https?:\/\/[^\s"']+\.m3u8[^\s"']*/gi,
+        /["'](\/[^\s"']+\.m3u8[^\s"']*)["']/gi,
+        /https?:\/\/[^\s"']+\.mp4[^\s"']*/gi,
+        /(?:source|file|src)\s*[:=]\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)["']/gi
+      ];
+      const allFoundUrls = [];
+      for (const pattern of patterns) {
+        const matches = html.match(pattern);
+        if (matches) {
+          for (let match of matches) {
+            let videoUrl = match;
+            const kvMatch = match.match(/["']:[ ]*["']([^"']+)["']/);
+            if (kvMatch)
+              videoUrl = kvMatch[1];
+            else {
+              const quoteMatch = match.match(/["']([^"']+)["']/);
+              if (quoteMatch)
+                videoUrl = quoteMatch[1];
+            }
+            const absUrlMatch = videoUrl.match(/https?:\/\/[^\s"']+/);
+            if (absUrlMatch)
+              videoUrl = absUrlMatch[0];
+            videoUrl = videoUrl.replace(/[\\"'\)\]]+$/, "");
+            if (!videoUrl || videoUrl.length < 5 || videoUrl.includes("google.com") || videoUrl.includes("youtube.com"))
+              continue;
+            if (videoUrl.startsWith("/") && !videoUrl.startsWith("//"))
+              videoUrl = embedBase + videoUrl;
+            allFoundUrls.push(videoUrl);
+          }
+        }
+      }
+      if (allFoundUrls.length > 0) {
+        allFoundUrls.sort((a, b) => {
+          const hasParamA = a.includes("?");
+          const hasParamB = b.includes("?");
+          if (hasParamA !== hasParamB)
+            return hasParamB ? 1 : -1;
+          const isM3U8A = a.toLowerCase().includes(".m3u8");
+          const isM3U8B = b.toLowerCase().includes(".m3u8");
+          if (isM3U8A !== isM3U8B)
+            return isM3U8B ? 1 : -1;
+          return a.length - b.length;
+        });
+        const bestUrl = allFoundUrls[0];
+        try {
+          console.log(`[Tamilblasters] Detected best URL: ${bestUrl}. Resolving quality...`);
+          const qualityData = yield Promise.race([
+            detectQualityFromM3U8(bestUrl),
+            new Promise((resolve) => setTimeout(() => resolve(null), 3e3))
+          ]);
+          if (qualityData)
+            return qualityData;
+          console.log(`[Tamilblasters] Quality resolution timed out for ${bestUrl}, using default.`);
+        } catch (e) {
+          console.log(`[Tamilblasters] Quality resolution failed: ${e.message}`);
+        }
+        return { variants: [{ url: bestUrl, quality: "Unknown" }], audios: [], isMaster: false, masterUrl: bestUrl };
+      }
+      return [];
+    } catch (error) {
+      console.error(`[Tamilblasters] Error extracting from ${hostName}: ${error.message}`);
+      return [];
+    }
+  });
+}
+function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) {
+  return __async(this, null, function* () {
+    console.log(`[Tamilblasters] Processing ${mediaType} ${tmdbId}`);
+    try {
+      let mediaInfo;
+      const imdbMatch = tmdbId.match(/^[Tt][Tt]?(\d+)$/);
+      if (imdbMatch) {
+        mediaInfo = yield resolveImdbId(imdbMatch[0]);
+        if (!mediaInfo) {
+          console.log(`[Tamilblasters] IMDb resolve failed for "${tmdbId}", using as-is`);
+          mediaInfo = { title: tmdbId, year: null };
+        }
+      } else {
+        const numericId = tmdbId.replace(/^[^\d]+/, "");
+        const isNumericId = /^\d+$/.test(numericId);
+        if (isNumericId) {
+          try {
+            mediaInfo = yield getTMDBDetails(numericId, mediaType);
+          } catch (error) {
+            console.log(`[Tamilblasters] TMDB fetch failed for ID ${numericId}, using "${tmdbId}" as search query`);
+            mediaInfo = { title: tmdbId, year: null };
+          }
+        } else {
+          console.log(`[Tamilblasters] Using "${tmdbId}" as search query indirectly`);
+          mediaInfo = { title: toTitleCase(tmdbId), year: null };
+        }
+      }
+      try {
+        const workingDomain = yield getReadyDomain();
+        if (workingDomain !== MAIN_URL) {
+          console.log(`[Tamilblasters] Switching MAIN_URL: ${MAIN_URL} -> ${workingDomain}`);
+          MAIN_URL = workingDomain;
+          HEADERS.Referer = `${MAIN_URL}/`;
+        }
+      } catch (e) {
+        console.log(`[Tamilblasters] Domain discovery failed: ${e.message}`);
+      }
+      const searchResults = yield search(mediaInfo.title);
+      const allMatches = findAllTitleMatches(mediaInfo, searchResults);
+      if (allMatches.length === 0) {
+        console.warn("[Tamilblasters] No matching titles found in search results");
+        return [];
+      }
+      const uniqueMatches = [];
+      const seenUrls = /* @__PURE__ */ new Set();
+      for (const match of allMatches) {
+        if (!seenUrls.has(match.href)) {
+          seenUrls.add(match.href);
+          uniqueMatches.push(match);
+        }
+      }
+      const topMatches = uniqueMatches.slice(0, 3);
+      console.log(`[Tamilblasters] Processing top ${topMatches.length} unique matches out of ${allMatches.length} total`);
+      const allValidStreams = [];
+      const targetResults = 20;
+      const matchConcurrencyLimit = 2;
+      const matchActiveTasks = /* @__PURE__ */ new Set();
+      let isTerminated = false;
+      const processMatch = (match) => __async(this, null, function* () {
+        var _a;
+        if (allValidStreams.length >= targetResults || isTerminated)
+          return;
+        console.log(`[Tamilblasters] Processing match: ${match.title} -> ${match.href}`);
+        try {
+          const pageResponse = yield fetchWithTimeout(match.href, { headers: HEADERS }, 8e3);
+          const pageHtml = yield pageResponse.text();
+          const $ = cheerio.load(pageHtml);
+          const fullPageTitle = $("h1.entry-title").text().trim() || match.title;
+          console.log(`[Tamilblasters] Full Page Title: ${fullPageTitle}`);
+          const rawStreams = [];
+          const matchTitle = match.title;
+          const yearMatch = matchTitle.match(/[\(\[](\d{4})[\)\]]/);
+          let movieName = matchTitle;
+          let yearStr = "";
+          let baseLanguage = "Original";
+          if (yearMatch) {
+            yearStr = yearMatch[1];
+            movieName = matchTitle.split(yearMatch[0])[0].trim();
+            baseLanguage = ((_a = matchTitle.split(yearMatch[0])[1]) == null ? void 0 : _a.trim()) || "Original";
+          }
+          let iframes = $("iframe");
+          if (iframes.length === 0) {
+            iframes = $("*").filter((i, el) => el.tagName && el.tagName.toLowerCase() === "iframe");
+          }
+          iframes.each((i, el) => {
+            let streamurl = $(el).attr("src");
+            if (!streamurl || streamurl.includes("google.com") || streamurl.includes("youtube.com"))
+              return;
+            let episodeLabel = "";
+            let current = $(el);
+            for (let j = 0; j < 5; j++) {
+              let prev = current.prev();
+              if (prev.length === 0) {
+                current = current.parent();
+                if (current.is("body") || current.length === 0)
+                  break;
+                continue;
+              }
+              const text = prev.text().trim();
+              if (text.toLowerCase().includes("episode")) {
+                episodeLabel = text.replace(/[\r\n]+/g, " ").trim();
+                break;
+              }
+              current = prev;
+            }
+            let displayLabel = episodeLabel || $(el).closest("div").prev("p").text().trim() || $(el).parent().text().trim().substring(0, 50) || "Stream " + (i + 1);
+            if (displayLabel.toLowerCase().includes("episode") || displayLabel.match(/EP\s*\d+/i)) {
+              const epMatch = displayLabel.match(/(?:Episode|EP)\s*[–-ー]?\s*(\d+)/i);
+              if (epMatch) {
+                displayLabel = `EP${epMatch[1]}`;
+              }
+            }
+            const isTVShow = mediaType === "tv" || matchTitle.match(/S\d+.*EP/i) || matchTitle.match(/Season.*Episode/i) || displayLabel.match(/EP\s*\d+/i) || displayLabel.match(/Episode\s*\d+/i);
+            let seasonCode = "";
+            let episodeCode = "";
+            let langStr = baseLanguage;
+            if (isTVShow) {
+              const sMatch = matchTitle.match(/S(\d+)/i);
+              seasonCode = sMatch ? `S${sMatch[1].padStart(2, "0")}` : "S01";
+              let episodeNum = null;
+              const epLabelMatch = displayLabel.match(/EP\s*(\d+)/i) || displayLabel.match(/Episode\s*(\d+)/i);
+              if (epLabelMatch) {
+                episodeNum = epLabelMatch[1];
+              } else {
+                const epTitleMatch = matchTitle.match(/EP\s*(\d+)/i);
+                if (epTitleMatch)
+                  episodeNum = epTitleMatch[1];
+              }
+              episodeCode = episodeNum ? `E${episodeNum.padStart(2, "0")}` : displayLabel;
+              langStr = langStr.replace(/S\d+/gi, "").replace(/EP\s*\(.*?\)/gi, "").replace(/EP\d+/gi, "").replace(/\s+/g, " ").trim();
+              langStr = langStr.replace(/^[-\s,[\]]+|[-\s,[\]]+$/g, "").trim();
+            }
+            let type = "UNKNOWN";
+            const searchMeta = (fullPageTitle + " " + displayLabel).toLowerCase();
+            if (searchMeta.includes("bluray") || searchMeta.includes("brrip"))
+              type = "BluRay";
+            else if (searchMeta.includes("web-dl") || searchMeta.includes("webdl"))
+              type = "WEB-DL";
+            else if (searchMeta.includes("webrip"))
+              type = "WEBRip";
+            else if (searchMeta.includes("hdrip"))
+              type = "HDRip";
+            else if (searchMeta.includes("dvdrip"))
+              type = "DVDRip";
+            rawStreams.push({
+              baseTitle: movieName,
+              year: yearStr,
+              language: langStr,
+              seasonCode,
+              episodeCode,
+              type,
+              url: streamurl,
+              label: displayLabel,
+              matchTitle: match.title
+            });
+          });
+          let streamsToProcess = rawStreams;
+          if (episode !== null) {
+            const epNum = parseInt(episode);
+            const reqEp = `E${epNum.toString().padStart(2, "0")}`;
+            const epRegex = new RegExp(`\\b(EP|EPISODE|E)\\s*0*${epNum}\\b`, "i");
+            streamsToProcess = rawStreams.filter((s) => {
+              const label = s.label.toUpperCase();
+              const epCode = s.episodeCode.toUpperCase();
+              if (epRegex.test(label))
+                return true;
+              if (epCode === reqEp)
+                return true;
+              const codeEpMatch = epCode.match(/E(\d+)/i);
+              if (codeEpMatch && parseInt(codeEpMatch[1]) === epNum)
+                return true;
+              return false;
+            });
+            if (streamsToProcess.length === 0) {
+              console.log(`[Tamilblasters] No specific iframes matched episode ${episode} labels, processing first 10 as fallback.`);
+              streamsToProcess = rawStreams;
+            }
+          }
+          const isTV = episode !== null;
+          const limitedStreams = streamsToProcess.slice(0, isTV ? 40 : 10);
+          if (streamsToProcess.length > (isTV ? 40 : 10)) {
+            console.log(`[Tamilblasters] Limiting to first ${isTV ? 40 : 10} matching iframes out of ${streamsToProcess.length} for performance`);
+          }
+          console.log(`[Tamilblasters] Extracting direct streams from ${limitedStreams.length} embed URLs for "${match.title}"...`);
+          const directStreams = [];
+          const seenUrls2 = /* @__PURE__ */ new Set();
+          const concurrencyLimit = 5;
+          const activeTasks = /* @__PURE__ */ new Set();
+          const itemProcessEmbed = (stream) => __async(this, null, function* () {
+            if (allValidStreams.length >= targetResults || isTerminated)
+              return;
+            try {
+              const result = yield Promise.race([
+                extractDirectStream(stream.url),
+                new Promise(
+                  (_, reject) => setTimeout(() => reject(new Error("Extraction timeout after 15 seconds")), 15e3)
+                )
+              ]);
+              if (result && result.variants && result.variants.length > 0) {
+                const audioInfo = result.audios.length > 0 ? result.audios.join(", ") : "";
+                if (result.isMaster && result.audios.length > 1) {
+                  const bestQuality = result.variants[0].quality;
+                  const streamData = __spreadProps(__spreadValues({}, stream), {
+                    url: result.masterUrl,
+                    quality: bestQuality,
+                    audioInfo,
+                    isMaster: true
+                  });
+                  const isWorking = yield checkLink(streamData.url, { "Referer": MAIN_URL, "User-Agent": HEADERS["User-Agent"] });
+                  if (isWorking && !seenUrls2.has(streamData.url)) {
+                    seenUrls2.add(streamData.url);
+                    directStreams.push(streamData);
+                  }
+                } else {
+                  for (const variant of result.variants) {
+                    const streamData = __spreadProps(__spreadValues({}, stream), {
+                      url: variant.url,
+                      quality: variant.quality,
+                      audioInfo,
+                      isMaster: false
+                    });
+                    const isWorking = yield checkLink(streamData.url, { "Referer": MAIN_URL, "User-Agent": HEADERS["User-Agent"] });
+                    if (isWorking && !seenUrls2.has(streamData.url)) {
+                      seenUrls2.add(streamData.url);
+                      directStreams.push(streamData);
+                    }
+                  }
+                }
+              }
+            } catch (error) {
+              console.error(`[Tamilblasters] Failed to extract stream: ${error.message}`);
+            }
+          });
+          for (const stream of limitedStreams) {
+            if (allValidStreams.length >= targetResults || isTerminated)
+              break;
+            const task = itemProcessEmbed(stream).then(() => activeTasks.delete(task));
+            activeTasks.add(task);
+            if (activeTasks.size >= concurrencyLimit) {
+              yield Promise.race(activeTasks);
+            }
+          }
+          yield Promise.all(activeTasks);
+          let validStreams = directStreams;
+          const shouldFilter = season !== null || episode !== null;
+          if (shouldFilter) {
+            const reqEpUpper = episode !== null ? `EP${episode.toString().padStart(2, "0")}` : null;
+            const reqEpLower = episode !== null ? `e${episode.toString().padStart(2, "0")}` : null;
+            const reqEpSpaced = episode !== null ? `e ${episode.toString().padStart(2, "0")}` : null;
+            const reqSeason = season !== null ? `S${season.toString().padStart(2, "0")}` : null;
+            const reqSeasonLower = season !== null ? `s${season.toString().padStart(2, "0")}` : null;
+            const matchHasCorrectSeason = !reqSeason || match.title.toUpperCase().includes(reqSeason) || match.title.toLowerCase().includes(reqSeasonLower);
+            if (matchHasCorrectSeason) {
+              const epNum = parseInt(episode);
+              const reqEp = `E${epNum.toString().padStart(2, "0")}`;
+              const epRegex = new RegExp(`\\b(EP|EPISODE|E)\\s*0*${epNum}\\b`, "i");
+              const filtered = validStreams.filter((s) => {
+                if (isNaN(epNum))
+                  return true;
+                const label = s.label.toUpperCase();
+                const epCode = s.episodeCode.toUpperCase();
+                const matchTitle2 = (s.matchTitle || "").toUpperCase();
+                if (epRegex.test(label))
+                  return true;
+                if (epCode === reqEp)
+                  return true;
+                const codeEpMatch = epCode.match(/E(\d+)/i);
+                if (codeEpMatch && parseInt(codeEpMatch[1]) === epNum)
+                  return true;
+                const hasStreamEpInfo = label.includes("EP") || label.includes("E") || /\d+/.test(epCode);
+                if (!hasStreamEpInfo) {
+                  return epRegex.test(matchTitle2);
+                }
+                return false;
+              });
+              validStreams = filtered;
+              if (filtered.length > 0) {
+                console.log(`[Tamilblasters] Filtered to ${validStreams.length} streams for episode ${episode}`);
+              } else {
+                console.log(`[Tamilblasters] No streams found matching epsiode ${episode}`);
+              }
+            } else {
+              validStreams = [];
+            }
+          }
+          if (validStreams.length > 0) {
+            allValidStreams.push(...validStreams);
+          }
+          if (allValidStreams.length >= targetResults) {
+            isTerminated = true;
+          }
+        } catch (innerError) {
+          console.error(`[Tamilblasters] Failed to process match ${match.title}:`, innerError.message);
+        }
+      });
+      for (const match of topMatches) {
+        if (allValidStreams.length >= targetResults || isTerminated)
+          break;
+        const task = processMatch(match).then(() => matchActiveTasks.delete(task));
+        matchActiveTasks.add(task);
+        if (matchActiveTasks.size >= matchConcurrencyLimit) {
+          yield Promise.race(matchActiveTasks);
+        }
+      }
+      yield Promise.all(matchActiveTasks);
+      console.log(`[Tamilblasters] Final validation of ${allValidStreams.length} candidate streams...`);
+      const finalStreams = [];
+      const validationTasks = /* @__PURE__ */ new Set();
+      const validationConcurrency = 5;
+      const validateAndFormat = (s) => __async(this, null, function* () {
+        try {
+          const isWorking = yield checkLink(s.url, { "Referer": MAIN_URL, "User-Agent": HEADERS["User-Agent"] });
+          if (isWorking) {
+            const quality = s.quality || "Unknown";
+            let size = "UNKNOWN";
+            if (s.matchTitle && quality !== "Unknown") {
+              const qualityPattern = new RegExp(`${quality}\\s*[\\[\\(]([^\\]\\)]+)[\\]\\)]`, "i");
+              const sizeMatch = s.matchTitle.match(qualityPattern);
+              if (sizeMatch)
+                size = sizeMatch[1].toUpperCase();
+            }
+            const streamObj = __spreadProps(__spreadValues({}, s), {
+              quality,
+              size
+            });
+            finalStreams.push({
+              name: "Tamilblasters",
+              title: formatStreamTitle(mediaInfo, streamObj),
+              url: s.url,
+              quality: streamObj.quality,
+              headers: {
+                "Referer": MAIN_URL,
+                "User-Agent": HEADERS["User-Agent"]
+              },
+              provider: "Tamilblasters"
+            });
+          }
+        } catch (err) {
+          console.error(`[Tamilblasters] Validation failed for ${s.url}:`, err.message);
+        }
+      });
+      for (const stream of allValidStreams) {
+        const task = validateAndFormat(stream).then(() => validationTasks.delete(task));
+        validationTasks.add(task);
+        if (validationTasks.size >= validationConcurrency) {
+          yield Promise.race(validationTasks);
+        }
+      }
+      yield Promise.all(validationTasks);
+      console.log(`[Tamilblasters] Returning ${finalStreams.length} valid streams out of ${allValidStreams.length} candidates`);
+      return finalStreams;
+    } catch (error) {
+      console.error("[Tamilblasters] getStreams failed:", error.message);
+      return [];
+    }
+  });
+}
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { getStreams };
+} else {
+  global.getStreams = { getStreams };
+}

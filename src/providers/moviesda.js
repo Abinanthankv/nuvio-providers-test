@@ -1,10 +1,865 @@
 /**
  * moviesda - Built from src/moviesda/
- * Generated: 2026-07-11T11:09:01.091Z
+ * Generated: 2026-07-11T11:32:14.630Z
  */
-var G=Object.defineProperty,j=Object.defineProperties;var V=Object.getOwnPropertyDescriptors;var F=Object.getOwnPropertySymbols;var Q=Object.prototype.hasOwnProperty,J=Object.prototype.propertyIsEnumerable;var P=(e,o,r)=>o in e?G(e,o,{enumerable:!0,configurable:!0,writable:!0,value:r}):e[o]=r,L=(e,o)=>{for(var r in o||(o={}))Q.call(o,r)&&P(e,r,o[r]);if(F)for(var r of F(o))J.call(o,r)&&P(e,r,o[r]);return e},T=(e,o)=>j(e,V(o));var p=(e,o,r)=>new Promise((c,t)=>{var n=s=>{try{a(r.next(s))}catch(l){t(l)}},u=s=>{try{a(r.throw(s))}catch(l){t(l)}},a=s=>s.done?c(s.value):Promise.resolve(s.value).then(n,u);a((r=r.apply(e,o)).next())});var x=require("cheerio-without-node-native"),A="1b3113663c9004682ed61086cf967c44",_="https://api.themoviedb.org/3",E=["https://moviesda.cloud","https://moviesda19.com","https://moviesda18.com","https://moviesda17.com","https://moviesda16.com"],g=E[0],$={"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",Referer:`${g}/`};function X(){return p(this,null,function*(){console.log("[Moviesda] Checking for a working domain...");let e=E.map(o=>p(this,null,function*(){try{if((yield M(o,{method:"HEAD"},5e3)).ok||(yield M(o,{method:"GET"},5e3)).ok)return o}catch(r){}return null}));for(let o of e){let r=yield o;if(r)return console.log(`[Moviesda] Found working domain: ${r}`),r}return E[0]})}function M(c){return p(this,arguments,function*(e,o={},r=1e4){return Promise.race([fetch(e,L({},o)),new Promise((t,n)=>setTimeout(()=>n(new Error(`Timeout after ${r}ms`)),r))])})}function N(e){return e?e.toLowerCase().replace(/[^a-z0-9\s]/g,"").replace(/\s+/g," ").trim():""}function Z(e,o){let r=N(e),c=N(o);if(r===c)return 1;if(r.includes(c)||c.includes(r))return .9;let t=new Set(r.split(/\s+/).filter(s=>s.length>2)),n=new Set(c.split(/\s+/).filter(s=>s.length>2));if(t.size===0||n.size===0)return 0;let u=new Set([...t].filter(s=>n.has(s))),a=new Set([...t,...n]);return u.size/a.size}function z(e,o,r,c){for(;r--;)if(c[r]){let t=r.toString(o);e=e.replace(new RegExp("\\b"+t+"\\b","g"),c[r])}return e}function ee(e,o){if(!o||o.length===0)return null;let r=e.year?parseInt(e.year):null,c=null,t=0;for(let n of o){let u=Z(e.title,n.title);r&&(n.title.includes(r.toString())?u+=.3:(n.title.includes((r+1).toString())||n.title.includes((r-1).toString()))&&(u+=.1)),u>t&&(t=u,c=n)}return c&&t>.4?(console.log(`[Moviesda] Best match: "${c.title}" (score: ${t.toFixed(2)})`),c):null}function I(e,o){let r=o.quality||"Unknown",c=e.title||"Unknown",t=e.year||"",n="",u=o.text?o.text.match(/(\d+(?:\.\d+)?\s*(?:GB|MB))/i):null;u&&(n=u[1]);let a="",s=((o.text||"")+" "+(o.url||"")).toLowerCase();s.includes("bluray")||s.includes("brrip")?a="BluRay":s.includes("web-dl")?a="WEB-DL":s.includes("webrip")?a="WEBRip":s.includes("hdrip")?a="HDRip":s.includes("dvdrip")?a="DVDRip":s.includes("bdrip")?a="BDRip":s.includes("hdtv")&&(a="HDTV");let l=a?`\u{1F4F9}: ${a}
-`:"",d=n?`\u{1F4BE}: ${n} | \u{1F69C}: moviesda
-`:"",i=t&&t!=="N/A"?` ${t}`:"",h={TAMIL:/tamil/i,HINDI:/hindi/i,TELUGU:/telugu/i,MALAYALAM:/malayalam/i,KANNADA:/kannada/i,ENGLISH:/english|eng/i,"MULTI AUDIO":/multi/i},f="TAMIL";for(let[m,v]of Object.entries(h))if(v.test(s)){f=m;break}return`Moviesda (Instant) (${r})
-${l}\u{1F4FC}: ${c}${i} ${r}
-${d}\u{1F310}: ${f}`}function te(e,o){return p(this,null,function*(){let c=`${_}/${o==="movie"?"movie":"tv"}/${e}?api_key=${A}`;try{let n=yield(yield M(c,{},8e3)).json(),u={title:n.title||n.name,year:(n.release_date||n.first_air_date||"").split("-")[0]};return console.log(`[Moviesda] TMDB Info: "${u.title}" (${u.year||"N/A"})`),u}catch(t){throw console.error("[Moviesda] Error fetching TMDB metadata:",t.message),t}})}function oe(e){return p(this,null,function*(){var o,r;try{let c=`${_}/find/${e}?api_key=${A}&external_source=imdb_id`,n=yield(yield M(c,{},8e3)).json(),u=(o=n.movie_results)==null?void 0:o[0],a=(r=n.tv_results)==null?void 0:r[0];if(u){let s={title:u.title,year:(u.release_date||"").split("-")[0]};return console.log(`[Moviesda] IMDb ${e} -> Movie: "${s.title}" (${s.year||"N/A"})`),s}if(a){let s={title:a.name,year:(a.first_air_date||"").split("-")[0]};return console.log(`[Moviesda] IMDb ${e} -> TV: "${s.title}" (${s.year||"N/A"})`),s}return console.log(`[Moviesda] IMDb ${e} not found on TMDB`),null}catch(c){return console.error(`[Moviesda] Error resolving IMDb ID ${e}:`,c.message),null}})}function se(e,o){return p(this,null,function*(){let c=`${_}/search/${o==="movie"?"movie":"tv"}?api_key=${A}&query=${encodeURIComponent(e)}`;try{console.log(`[Moviesda] Searching TMDB for: "${e}"`);let n=yield(yield M(c,{},8e3)).json();if(n.results&&n.results.length>0){let u=n.results[0],a={title:u.title||u.name,year:(u.release_date||u.first_air_date||"").split("-")[0]};return console.log(`[Moviesda] TMDB Search Result: "${a.title}" (${a.year||"N/A"})`),a}return console.log(`[Moviesda] No TMDB results found for "${e}"`),null}catch(t){return console.error("[Moviesda] Error searching TMDB:",t.message),null}})}function re(e,o=null){return p(this,null,function*(){console.log(`[Moviesda] Searching for: "${e}" (year: ${o||"any"})`);try{let r=[],c=[];if(o)c.push(`${g}/tamil-${o}-movies/`);else{let t=new Date().getFullYear();for(let n=t;n>=t-2;n--)c.push(`${g}/tamil-${n}-movies/`)}console.log(`[Moviesda] Checking ${c.length} category pages`);for(let t of c)try{let u=yield(yield M(t,{headers:$},8e3)).text(),a=x.load(u);a('a[href*="-tamil-movie"], a[href*="-movie/"]').each((s,l)=>{let d=a(l).attr("href"),i=a(l).text().trim();if(!d||d.includes("/tamil-movies/")||d==="#"||i.length<3)return;let h=i.match(/^(.+?)\s*(?:\((\d{4})\))?$/);if(h){let f=h[1].trim(),m=h[2]||null,v=d.startsWith("http")?d:`${g}${d}`;r.push({title:i,cleanTitle:f,year:m,href:v})}})}catch(n){console.error(`[Moviesda] Error browsing ${t}: ${n.message}`)}return console.log(`[Moviesda] Found ${r.length} total movies in categories`),r}catch(r){return console.error("[Moviesda] Search error:",r.message),[]}})}function ne(e,o){return p(this,null,function*(){try{let r=new URL(e).origin,t=yield(yield M(e,{headers:T(L({},$),{Referer:g})},5e3)).text(),n=t.match(new RegExp("eval\\(function\\(p,a,c,k,e,d\\)\\{.*?\\}\\s*\\((.*)\\)\\s*\\)","s"));if(n){console.log(`[Moviesda] Detected Packer obfuscation on ${o}, unpacking...`);let l=n[1].trim().match(new RegExp("^'(.*)',\\s*(\\d+),\\s*(\\d+),\\s*'(.*?)'\\.split\\(","s"));if(l){let d=z(l[1],parseInt(l[2]),parseInt(l[3]),l[4].split("|"));t+=`
-`+d}}let u=[/["']hls[2-4]["']\s*:\s*["']([^"']+)["']/gi,/sources\s*:\s*\[\s*{\s*file\s*:\s*["']([^"']+)["']/gi,/https?:\/\/[^\s"']+\.m3u8[^\s"']*/gi,/["'](\/[^\s"']+\.m3u8[^\s"']*)["']/gi,/https?:\/\/[^\s"']+\.mp4[^\s"']*/gi,/(?:source|file|src)\s*[:=]\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)["']/gi],a=[];for(let s of u){let l=t.match(s);if(l&&l.length>0)for(let d of l){let i=d,h=d.match(/["']:[ ]*["']([^"']+)["']/);if(h)i=h[1];else{let m=d.match(/["']([^"']+)["']/);m&&(i=m[1])}let f=i.match(/https?:\/\/[^\s"']+/);f&&(i=f[0]),i=i.replace(/[\\"'\)\]]+$/,""),!(!i||i.length<5||i.includes("google.com")||i.includes("youtube.com"))&&(i.startsWith("/")&&!i.startsWith("//")&&(i=r+i),a.push(i))}}if(a.length>0){a.sort((l,d)=>{let i=l.toLowerCase().includes(".m3u8"),h=d.toLowerCase().includes(".m3u8");return i!==h?h?1:-1:l.length-d.length});let s=a[0];return console.log(`[Moviesda] Found direct URL from ${o}: ${s}`),s}return console.log(`[Moviesda] No direct URL found in ${o}, skipping`),null}catch(r){return console.error(`[Moviesda] Error extracting from ${o}: ${r.message}`),null}})}function ae(e){return p(this,null,function*(){try{console.log(`[Moviesda] Extracting from embed: ${e}`);let r=new URL(e).hostname.toLowerCase();return r.includes("onestream.watch")?yield S(e):yield ne(e,r)}catch(o){return console.error(`[Moviesda] Extraction error: ${o.message}`),null}})}function S(e){return p(this,null,function*(){console.log(`[Moviesda] Extracting from onestream.watch: ${e}`);try{let r=yield(yield M(e,{headers:T(L({},$),{Referer:g})},12e3)).text(),c=x.load(r),t=[];if(c("video source").each((s,l)=>{let d=c(l).attr("src"),i=c(l).attr("type");d&&t.push({src:d,type:i})}),t.length>0){let s=t[0].src;return console.log(`[Moviesda] Found direct URL from onestream: ${s}`),s}let n=r.match(/https?:\/\/[^\s"']+\.m3u8[^\s"']*/i);if(n)return console.log(`[Moviesda] Found m3u8 URL: ${n[0]}`),n[0];let u=r.match(/https?:\/\/[^\s"']+\.mp4[^\s"']*/i);if(u)return console.log(`[Moviesda] Found mp4 URL: ${u[0]}`),u[0];let a=r.match(new RegExp("eval\\(function\\(p,a,c,k,e,d\\)\\{.*?\\}\\s*\\((.*)\\)\\s*\\)","s"));if(a){let l=a[1].trim().match(new RegExp("^'(.*)',\\s*(\\d+),\\s*(\\d+),\\s*'(.*?)'\\.split\\(","s"));if(l){let i=z(l[1],parseInt(l[2]),parseInt(l[3]),l[4].split("|")).match(/https?:\/\/[^\s"']+\.m3u8[^\s"']*/i);if(i)return i[0]}}return console.log("[Moviesda] No direct URL found in onestream page"),null}catch(o){return console.error(`[Moviesda] Onestream extraction error: ${o.message}`),null}})}function W(e){return p(this,null,function*(){console.log(`[Moviesda] Parsing movie page: ${e}`);try{let r=yield(yield M(e,{headers:$},8e3)).text(),c=x.load(r),t=[],n=c('a[href*="-original-movie"]');if(n.length>0){let s=n.attr("href"),l=s.startsWith("http")?s:`${g}${s}`;return console.log(`[Moviesda] Found original page link: ${l}`),yield ie(l)}let u=[];if(c("a").each((s,l)=>{let d=c(l).attr("href"),i=c(l).text().trim();if(d&&i.match(/\b(360p|480p|720p|1080p|4K)\s*HD\b/i)){let h=i.match(/\b(360p|480p|720p|1080p|4K)\b/i),f=h?h[0]:"Unknown",m=d.startsWith("http")?d:`${g}${d}`;u.push({url:m,quality:f})}}),u.length>0){console.log(`[Moviesda] Found ${u.length} quality pages`);for(let s of u){let l=yield H(s.url,s.quality);l.forEach(d=>{d.text||(d.text=s.text||"")}),t.push(...l)}return t}let a=[];return c("a").each((s,l)=>{let d=c(l).attr("href"),i=c(l).text().trim();if(d&&d.includes("/download/")){let h=d.startsWith("http")?d:`${g}${d}`;a.push({url:h,text:i})}}),a.length>0&&(console.log(`[Moviesda] Found ${a.length} download links on quality page`),a.forEach(s=>{t.push({url:s.url,quality:"Unknown",type:"download"})})),console.log(`[Moviesda] Found ${t.length} streams on page`),t}catch(o){return console.error("[Moviesda] Movie page parse error:",o.message),[]}})}function ie(e){return p(this,null,function*(){console.log(`[Moviesda] Parsing original page: ${e}`);try{let r=yield(yield M(e,{headers:$},8e3)).text(),c=x.load(r),t=[];c("a").each((u,a)=>{let s=c(a).attr("href"),l=c(a).text().trim();if(s&&l.match(/\b(360p|480p|720p|1080p|4K)\s*HD\b/i)){let d=l.match(/\b(360p|480p|720p|1080p|4K)\b/i),i=d?d[0]:"Unknown",h=s.startsWith("http")?s:`${g}${s}`;t.push({url:h,quality:i,type:"quality_page"})}}),console.log(`[Moviesda] Found ${t.length} quality pages on original page`);let n=[];for(let u of t){let a=yield H(u.url,u.quality);n.push(...a)}return n}catch(o){return console.error("[Moviesda] Original page parse error:",o.message),[]}})}function H(e,o){return p(this,null,function*(){console.log(`[Moviesda] Parsing quality page (${o}): ${e}`);try{let c=yield(yield M(e,{headers:$},8e3)).text(),t=x.load(c),n=[];return t("a").each((u,a)=>{let s=t(a).attr("href"),l=t(a).text().trim();if(s&&s.includes("/download/")){let d=s.startsWith("http")?s:`${g}${s}`;n.push({url:d,quality:o,type:"download",text:l})}}),console.log(`[Moviesda] Found ${n.length} download links for ${o}`),n}catch(r){return console.error(`[Moviesda] Quality page parse error (${o}): ${r.message}`),[]}})}function C(e){return p(this,null,function*(){console.log(`[Moviesda] Extracting final URL from: ${e}`);try{let r=yield(yield M(e,{headers:$},8e3)).text(),c=x.load(r),t=[];if(c("a").each((n,u)=>{let a=c(u).attr("href"),s=c(u).text().trim().toLowerCase();if(a&&!a.includes("moviesda15.com")&&!a.includes("/tamil-movies/")&&!a.startsWith("#")&&(s.includes("download")||s.includes("server"))){let l=a.startsWith("http")?a:`https:${a}`;t.push(l)}}),t.length>0){let n=t[0];if(console.log(`[Moviesda] Found download URL: ${n}`),n.includes("download.moviespage.xyz/download/file/")){let u=n.match(/\/file\/(\d+)/);if(u){let s=`https://play.onestream.today/stream/page/${u[1]}`;return console.log(`[Moviesda] Converted to onestream URL: ${s}`),{url:s,needsExtraction:!0}}}return{url:n,needsExtraction:!1}}return console.log("[Moviesda] No final download URL found on page"),null}catch(o){return console.error(`[Moviesda] Error extracting final URL: ${o.message}`),null}})}function O(e,o="movie",r=null,c=null){return p(this,null,function*(){console.log(`[Moviesda] Processing ${o} ${e}`);try{let t,n=e.match(/^[Tt][Tt]?(\d+)$/);if(n)t=yield oe(n[0]),t||(console.log(`[Moviesda] IMDb resolve failed for "${e}", using as-is`),t={title:e,year:null});else{let i=e.replace(/^[^\d]+/,"");if(/^\d+$/.test(i))try{t=yield te(i,o)}catch(f){console.log(`[Moviesda] TMDB fetch failed, using "${e}" as search query`),t={title:e,year:null}}else{console.log(`[Moviesda] Using "${e}" as search query`);try{let f=yield se(e,o);f&&f.year?t=f:t={title:e,year:null}}catch(f){console.log(`[Moviesda] TMDB search failed: ${f.message}`),t={title:e,year:null}}}}try{let i=yield X();i!==g&&(console.log(`[Moviesda] Switching MAIN_URL: ${g} -> ${i}`),g=i,$.Referer=`${g}/`)}catch(i){console.log(`[Moviesda] Domain discovery failed: ${i.message}`)}console.log(`[Moviesda] Looking for: "${t.title}" (${t.year||"N/A"})`);let u=yield re(t.title,t.year),a=ee(t,u);if(!a){console.warn("[Moviesda] No matching title found in category pages");let i=new Date().getFullYear(),h=t.year?[t.year,i,i-1]:[i,i-1,i+1,i-2,i-3,i-4];for(let f of h){let m=t.title.toLowerCase().replace(/[^a-z0-9\s]/g,"").replace(/\s+/g,"-"),v=`${g}/${m}-${f}-tamil-movie/`;console.log(`[Moviesda] Trying direct URL: ${v}`);try{let y=yield M(v,{headers:$},5e3);if(y.ok){let b=yield y.text();if(b.includes("entry-title")||b.includes("movie")){console.log(`[Moviesda] \u2713 Direct URL found: ${v}`);let q=yield W(v);if(q.length>0){let K=q.slice(0,5),D=[];for(let U of K){let R=U.url;if(U.type==="download")try{let w=yield Promise.race([C(U.url),new Promise((k,B)=>setTimeout(()=>B(new Error("Extraction timeout")),5e3))]);if(!w)continue;if(w.needsExtraction)try{let k=yield Promise.race([S(w.url),new Promise((B,Y)=>setTimeout(()=>Y(new Error("Onestream extraction timeout")),5e3))]);if(!k)continue;R=k}catch(k){console.error(`[Moviesda] Onestream extraction failed: ${k.message}`);continue}else R=w.url}catch(w){console.error(`[Moviesda] Download URL extraction failed: ${w.message}`);continue}D.push({name:"Moviesda",title:I(t,U),url:R,quality:U.quality||"Unknown",headers:{Referer:g,"User-Agent":$["User-Agent"]},provider:"Moviesda"})}return console.log(`[Moviesda] Successfully extracted ${D.length} streams`),D}}}}catch(y){console.log(`[Moviesda] Direct URL failed for ${f}: ${y.message}`)}}return console.warn("[Moviesda] No results found via category search or direct URL"),[]}console.log(`[Moviesda] Processing match: ${a.title}`);let s=yield W(a.href);if(s.length===0)return console.warn("[Moviesda] No streams found on movie page"),[];let l=s.slice(0,5);s.length>5&&console.log(`[Moviesda] Limiting to first 5 streams out of ${s.length}`);let d=[];for(let i of l){let h=i.url;if(i.type==="download")try{let f=yield Promise.race([C(i.url),new Promise((m,v)=>setTimeout(()=>v(new Error("Extraction timeout")),5e3))]);if(!f){console.log("[Moviesda] Failed to extract final URL from download page, skipping");continue}if(f.needsExtraction){console.log("[Moviesda] URL needs extraction from onestream");try{let m=yield Promise.race([S(f.url),new Promise((v,y)=>setTimeout(()=>y(new Error("Onestream extraction timeout")),5e3))]);if(!m){console.log("[Moviesda] Failed to extract from onestream, skipping");continue}h=m}catch(m){console.error(`[Moviesda] Onestream extraction failed: ${m.message}`);continue}}else h=f.url}catch(f){console.error(`[Moviesda] Download URL extraction failed: ${f.message}`);continue}else if(i.type==="embed")try{let f=yield Promise.race([ae(i.url),new Promise((m,v)=>setTimeout(()=>v(new Error("Extraction timeout")),5e3))]);if(!f){console.log("[Moviesda] Failed to extract from embed, skipping");continue}h=f}catch(f){console.error(`[Moviesda] Embed extraction failed: ${f.message}`);continue}d.push({name:"Moviesda",title:I(t,i),url:h,quality:i.quality||"Unknown",headers:{Referer:g,"User-Agent":$["User-Agent"]},provider:"Moviesda"})}return console.log(`[Moviesda] Successfully extracted ${d.length} streams`),d}catch(t){return console.error("[Moviesda] getStreams failed:",t.message),[]}})}typeof module!="undefined"&&module.exports?module.exports={getStreams:O}:global.getStreams={getStreams:O};
+var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __spreadValues = (a, b) => {
+  for (var prop in b || (b = {}))
+    if (__hasOwnProp.call(b, prop))
+      __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b)) {
+      if (__propIsEnum.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    }
+  return a;
+};
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+var __async = (__this, __arguments, generator) => {
+  return new Promise((resolve, reject) => {
+    var fulfilled = (value) => {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var rejected = (value) => {
+      try {
+        step(generator.throw(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    step((generator = generator.apply(__this, __arguments)).next());
+  });
+};
+
+// src/providers/moviesda/index.js
+var cheerio = require("cheerio-without-node-native");
+var TMDB_API_KEY = "1b3113663c9004682ed61086cf967c44";
+var TMDB_BASE_URL = "https://api.themoviedb.org/3";
+var POTENTIAL_DOMAINS = [
+  "https://moviesda.cloud",
+  "https://moviesda19.com",
+  "https://moviesda18.com",
+  "https://moviesda17.com",
+  "https://moviesda16.com"
+];
+var MAIN_URL = POTENTIAL_DOMAINS[0];
+var HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+  "Referer": `${MAIN_URL}/`
+};
+function getReadyDomain() {
+  return __async(this, null, function* () {
+    console.log("[Moviesda] Checking for a working domain...");
+    const checks = POTENTIAL_DOMAINS.map((domain) => __async(this, null, function* () {
+      try {
+        const response = yield fetchWithTimeout(domain, { method: "HEAD" }, 5e3);
+        if (response.ok)
+          return domain;
+        const getResponse = yield fetchWithTimeout(domain, { method: "GET" }, 5e3);
+        if (getResponse.ok)
+          return domain;
+      } catch (e) {
+      }
+      return null;
+    }));
+    for (const check of checks) {
+      const workingDomain = yield check;
+      if (workingDomain) {
+        console.log(`[Moviesda] Found working domain: ${workingDomain}`);
+        return workingDomain;
+      }
+    }
+    return POTENTIAL_DOMAINS[0];
+  });
+}
+function fetchWithTimeout(_0) {
+  return __async(this, arguments, function* (url, options = {}, timeout = 1e4) {
+    return Promise.race([
+      fetch(url, __spreadValues({}, options)),
+      new Promise(
+        (_, reject) => setTimeout(() => reject(new Error(`Timeout after ${timeout}ms`)), timeout)
+      )
+    ]);
+  });
+}
+function normalizeTitle(title) {
+  if (!title)
+    return "";
+  return title.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
+}
+function calculateTitleSimilarity(title1, title2) {
+  const norm1 = normalizeTitle(title1);
+  const norm2 = normalizeTitle(title2);
+  if (norm1 === norm2)
+    return 1;
+  if (norm1.includes(norm2) || norm2.includes(norm1))
+    return 0.9;
+  const words1 = new Set(norm1.split(/\s+/).filter((w) => w.length > 2));
+  const words2 = new Set(norm2.split(/\s+/).filter((w) => w.length > 2));
+  if (words1.size === 0 || words2.size === 0)
+    return 0;
+  const intersection = new Set([...words1].filter((w) => words2.has(w)));
+  const union = /* @__PURE__ */ new Set([...words1, ...words2]);
+  return intersection.size / union.size;
+}
+function unpack(p, a, c, k) {
+  while (c--) {
+    if (k[c]) {
+      const placeholder = c.toString(a);
+      p = p.replace(new RegExp("\\b" + placeholder + "\\b", "g"), k[c]);
+    }
+  }
+  return p;
+}
+function findBestTitleMatch(mediaInfo, searchResults) {
+  if (!searchResults || searchResults.length === 0)
+    return null;
+  const targetYear = mediaInfo.year ? parseInt(mediaInfo.year) : null;
+  let bestMatch = null;
+  let bestScore = 0;
+  for (const result of searchResults) {
+    let score = calculateTitleSimilarity(mediaInfo.title, result.title);
+    if (targetYear) {
+      if (result.title.includes(targetYear.toString())) {
+        score += 0.3;
+      } else if (result.title.includes((targetYear + 1).toString()) || result.title.includes((targetYear - 1).toString())) {
+        score += 0.1;
+      }
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = result;
+    }
+  }
+  if (bestMatch && bestScore > 0.4) {
+    console.log(`[Moviesda] Best match: "${bestMatch.title}" (score: ${bestScore.toFixed(2)})`);
+    return bestMatch;
+  }
+  return null;
+}
+function formatStreamTitle(mediaInfo, stream) {
+  const quality = stream.quality || "Unknown";
+  const title = mediaInfo.title || "Unknown";
+  const year = mediaInfo.year || "";
+  let size = "";
+  const sizeMatch = stream.text ? stream.text.match(/(\d+(?:\.\d+)?\s*(?:GB|MB))/i) : null;
+  if (sizeMatch)
+    size = sizeMatch[1];
+  let type = "";
+  const searchString = ((stream.text || "") + " " + (stream.url || "")).toLowerCase();
+  if (searchString.includes("bluray") || searchString.includes("brrip"))
+    type = "BluRay";
+  else if (searchString.includes("web-dl"))
+    type = "WEB-DL";
+  else if (searchString.includes("webrip"))
+    type = "WEBRip";
+  else if (searchString.includes("hdrip"))
+    type = "HDRip";
+  else if (searchString.includes("dvdrip"))
+    type = "DVDRip";
+  else if (searchString.includes("bdrip"))
+    type = "BDRip";
+  else if (searchString.includes("hdtv"))
+    type = "HDTV";
+  const typeLine = type ? `\u{1F4F9}: ${type}
+` : "";
+  const sizeLine = size ? `\u{1F4BE}: ${size} | \u{1F69C}: moviesda
+` : "";
+  const yearStr = year && year !== "N/A" ? ` ${year}` : "";
+  const langMarkers = {
+    "TAMIL": /tamil/i,
+    "HINDI": /hindi/i,
+    "TELUGU": /telugu/i,
+    "MALAYALAM": /malayalam/i,
+    "KANNADA": /kannada/i,
+    "ENGLISH": /english|eng/i,
+    "MULTI AUDIO": /multi/i
+  };
+  let language = "TAMIL";
+  for (const [name, regex] of Object.entries(langMarkers)) {
+    if (regex.test(searchString)) {
+      language = name;
+      break;
+    }
+  }
+  return `Moviesda (Instant) (${quality})
+${typeLine}\u{1F4FC}: ${title}${yearStr} ${quality}
+${sizeLine}\u{1F310}: ${language}`;
+}
+function getTMDBDetails(tmdbId, mediaType) {
+  return __async(this, null, function* () {
+    const type = mediaType === "movie" ? "movie" : "tv";
+    const url = `${TMDB_BASE_URL}/${type}/${tmdbId}?api_key=${TMDB_API_KEY}`;
+    try {
+      const response = yield fetchWithTimeout(url, {}, 8e3);
+      const data = yield response.json();
+      const info = {
+        title: data.title || data.name,
+        year: (data.release_date || data.first_air_date || "").split("-")[0]
+      };
+      console.log(`[Moviesda] TMDB Info: "${info.title}" (${info.year || "N/A"})`);
+      return info;
+    } catch (error) {
+      console.error("[Moviesda] Error fetching TMDB metadata:", error.message);
+      throw error;
+    }
+  });
+}
+function resolveImdbId(imdbId) {
+  return __async(this, null, function* () {
+    var _a, _b;
+    try {
+      const url = `${TMDB_BASE_URL}/find/${imdbId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
+      const response = yield fetchWithTimeout(url, {}, 8e3);
+      const data = yield response.json();
+      const movie = (_a = data.movie_results) == null ? void 0 : _a[0];
+      const tv = (_b = data.tv_results) == null ? void 0 : _b[0];
+      if (movie) {
+        const info = { title: movie.title, year: (movie.release_date || "").split("-")[0] };
+        console.log(`[Moviesda] IMDb ${imdbId} -> Movie: "${info.title}" (${info.year || "N/A"})`);
+        return info;
+      }
+      if (tv) {
+        const info = { title: tv.name, year: (tv.first_air_date || "").split("-")[0] };
+        console.log(`[Moviesda] IMDb ${imdbId} -> TV: "${info.title}" (${info.year || "N/A"})`);
+        return info;
+      }
+      console.log(`[Moviesda] IMDb ${imdbId} not found on TMDB`);
+      return null;
+    } catch (error) {
+      console.error(`[Moviesda] Error resolving IMDb ID ${imdbId}:`, error.message);
+      return null;
+    }
+  });
+}
+function searchTMDBByTitle(title, mediaType) {
+  return __async(this, null, function* () {
+    const type = mediaType === "movie" ? "movie" : "tv";
+    const url = `${TMDB_BASE_URL}/search/${type}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}`;
+    try {
+      console.log(`[Moviesda] Searching TMDB for: "${title}"`);
+      const response = yield fetchWithTimeout(url, {}, 8e3);
+      const data = yield response.json();
+      if (data.results && data.results.length > 0) {
+        const firstResult = data.results[0];
+        const info = {
+          title: firstResult.title || firstResult.name,
+          year: (firstResult.release_date || firstResult.first_air_date || "").split("-")[0]
+        };
+        console.log(`[Moviesda] TMDB Search Result: "${info.title}" (${info.year || "N/A"})`);
+        return info;
+      }
+      console.log(`[Moviesda] No TMDB results found for "${title}"`);
+      return null;
+    } catch (error) {
+      console.error("[Moviesda] Error searching TMDB:", error.message);
+      return null;
+    }
+  });
+}
+function search(query, year = null) {
+  return __async(this, null, function* () {
+    console.log(`[Moviesda] Searching for: "${query}" (year: ${year || "any"})`);
+    try {
+      const results = [];
+      const categoriesToCheck = [];
+      if (year) {
+        categoriesToCheck.push(`${MAIN_URL}/tamil-${year}-movies/`);
+      } else {
+        const currentYear = (/* @__PURE__ */ new Date()).getFullYear();
+        for (let y = currentYear; y >= currentYear - 2; y--) {
+          categoriesToCheck.push(`${MAIN_URL}/tamil-${y}-movies/`);
+        }
+      }
+      console.log(`[Moviesda] Checking ${categoriesToCheck.length} category pages`);
+      for (const categoryUrl of categoriesToCheck) {
+        try {
+          const response = yield fetchWithTimeout(categoryUrl, { headers: HEADERS }, 8e3);
+          const html = yield response.text();
+          const $ = cheerio.load(html);
+          $('a[href*="-tamil-movie"], a[href*="-movie/"]').each((i, el) => {
+            const href = $(el).attr("href");
+            const text = $(el).text().trim();
+            if (!href || href.includes("/tamil-movies/") || href === "#" || text.length < 3) {
+              return;
+            }
+            const match = text.match(/^(.+?)\s*(?:\((\d{4})\))?$/);
+            if (match) {
+              const title = match[1].trim();
+              const movieYear = match[2] || null;
+              const fullUrl = href.startsWith("http") ? href : `${MAIN_URL}${href}`;
+              results.push({
+                title: text,
+                // Keep full text with year
+                cleanTitle: title,
+                year: movieYear,
+                href: fullUrl
+              });
+            }
+          });
+        } catch (error) {
+          console.error(`[Moviesda] Error browsing ${categoryUrl}: ${error.message}`);
+        }
+      }
+      console.log(`[Moviesda] Found ${results.length} total movies in categories`);
+      return results;
+    } catch (error) {
+      console.error("[Moviesda] Search error:", error.message);
+      return [];
+    }
+  });
+}
+function extractFromGenericEmbed(embedUrl, hostName) {
+  return __async(this, null, function* () {
+    try {
+      const embedBase = new URL(embedUrl).origin;
+      const response = yield fetchWithTimeout(embedUrl, {
+        headers: __spreadProps(__spreadValues({}, HEADERS), {
+          "Referer": MAIN_URL
+        })
+      }, 5e3);
+      let html = yield response.text();
+      const packerMatch = html.match(new RegExp("eval\\(function\\(p,a,c,k,e,d\\)\\{.*?\\}\\s*\\((.*)\\)\\s*\\)", "s"));
+      if (packerMatch) {
+        console.log(`[Moviesda] Detected Packer obfuscation on ${hostName}, unpacking...`);
+        const rawArgs = packerMatch[1].trim();
+        const pMatch = rawArgs.match(new RegExp("^'(.*)',\\s*(\\d+),\\s*(\\d+),\\s*'(.*?)'\\.split\\(", "s"));
+        if (pMatch) {
+          const unpacked = unpack(pMatch[1], parseInt(pMatch[2]), parseInt(pMatch[3]), pMatch[4].split("|"));
+          html += "\n" + unpacked;
+        }
+      }
+      const patterns = [
+        /["']hls[2-4]["']\s*:\s*["']([^"']+)["']/gi,
+        /sources\s*:\s*\[\s*{\s*file\s*:\s*["']([^"']+)["']/gi,
+        /https?:\/\/[^\s"']+\.m3u8[^\s"']*/gi,
+        /["'](\/[^\s"']+\.m3u8[^\s"']*)["']/gi,
+        /https?:\/\/[^\s"']+\.mp4[^\s"']*/gi,
+        /(?:source|file|src)\s*[:=]\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)["']/gi
+      ];
+      const allFoundUrls = [];
+      for (const pattern of patterns) {
+        const matches = html.match(pattern);
+        if (matches && matches.length > 0) {
+          for (let match of matches) {
+            let videoUrl = match;
+            const kvMatch = match.match(/["']:[ ]*["']([^"']+)["']/);
+            if (kvMatch) {
+              videoUrl = kvMatch[1];
+            } else {
+              const quoteMatch = match.match(/["']([^"']+)["']/);
+              if (quoteMatch)
+                videoUrl = quoteMatch[1];
+            }
+            const absUrlMatch = videoUrl.match(/https?:\/\/[^\s"']+/);
+            if (absUrlMatch)
+              videoUrl = absUrlMatch[0];
+            videoUrl = videoUrl.replace(/[\\"'\)\]]+$/, "");
+            if (!videoUrl || videoUrl.length < 5 || videoUrl.includes("google.com") || videoUrl.includes("youtube.com")) {
+              continue;
+            }
+            if (videoUrl.startsWith("/") && !videoUrl.startsWith("//")) {
+              videoUrl = embedBase + videoUrl;
+            }
+            allFoundUrls.push(videoUrl);
+          }
+        }
+      }
+      if (allFoundUrls.length > 0) {
+        allFoundUrls.sort((a, b) => {
+          const isM3U8A = a.toLowerCase().includes(".m3u8");
+          const isM3U8B = b.toLowerCase().includes(".m3u8");
+          if (isM3U8A !== isM3U8B)
+            return isM3U8B ? 1 : -1;
+          return a.length - b.length;
+        });
+        const bestUrl = allFoundUrls[0];
+        console.log(`[Moviesda] Found direct URL from ${hostName}: ${bestUrl}`);
+        return bestUrl;
+      }
+      console.log(`[Moviesda] No direct URL found in ${hostName}, skipping`);
+      return null;
+    } catch (error) {
+      console.error(`[Moviesda] Error extracting from ${hostName}: ${error.message}`);
+      return null;
+    }
+  });
+}
+function extractDirectStream(embedUrl) {
+  return __async(this, null, function* () {
+    try {
+      console.log(`[Moviesda] Extracting from embed: ${embedUrl}`);
+      const url = new URL(embedUrl);
+      const hostname = url.hostname.toLowerCase();
+      if (hostname.includes("onestream.watch")) {
+        return yield extractFromOnestream(embedUrl);
+      }
+      return yield extractFromGenericEmbed(embedUrl, hostname);
+    } catch (error) {
+      console.error(`[Moviesda] Extraction error: ${error.message}`);
+      return null;
+    }
+  });
+}
+function extractFromOnestream(embedUrl) {
+  return __async(this, null, function* () {
+    console.log(`[Moviesda] Extracting from onestream.watch: ${embedUrl}`);
+    try {
+      const response = yield fetchWithTimeout(embedUrl, {
+        headers: __spreadProps(__spreadValues({}, HEADERS), {
+          "Referer": MAIN_URL
+        })
+      }, 12e3);
+      const html = yield response.text();
+      const $ = cheerio.load(html);
+      const videoSources = [];
+      $("video source").each((i, el) => {
+        const src = $(el).attr("src");
+        const type = $(el).attr("type");
+        if (src) {
+          videoSources.push({ src, type });
+        }
+      });
+      if (videoSources.length > 0) {
+        const directUrl = videoSources[0].src;
+        console.log(`[Moviesda] Found direct URL from onestream: ${directUrl}`);
+        return directUrl;
+      }
+      const m3u8Match = html.match(/https?:\/\/[^\s"']+\.m3u8[^\s"']*/i);
+      if (m3u8Match) {
+        console.log(`[Moviesda] Found m3u8 URL: ${m3u8Match[0]}`);
+        return m3u8Match[0];
+      }
+      const mp4Match = html.match(/https?:\/\/[^\s"']+\.mp4[^\s"']*/i);
+      if (mp4Match) {
+        console.log(`[Moviesda] Found mp4 URL: ${mp4Match[0]}`);
+        return mp4Match[0];
+      }
+      const packerMatch = html.match(new RegExp("eval\\(function\\(p,a,c,k,e,d\\)\\{.*?\\}\\s*\\((.*)\\)\\s*\\)", "s"));
+      if (packerMatch) {
+        const rawArgs = packerMatch[1].trim();
+        const pMatch = rawArgs.match(new RegExp("^'(.*)',\\s*(\\d+),\\s*(\\d+),\\s*'(.*?)'\\.split\\(", "s"));
+        if (pMatch) {
+          const unpacked = unpack(pMatch[1], parseInt(pMatch[2]), parseInt(pMatch[3]), pMatch[4].split("|"));
+          const m3u8MatchUnpacked = unpacked.match(/https?:\/\/[^\s"']+\.m3u8[^\s"']*/i);
+          if (m3u8MatchUnpacked)
+            return m3u8MatchUnpacked[0];
+        }
+      }
+      console.log(`[Moviesda] No direct URL found in onestream page`);
+      return null;
+    } catch (error) {
+      console.error(`[Moviesda] Onestream extraction error: ${error.message}`);
+      return null;
+    }
+  });
+}
+function parseMoviePage(url) {
+  return __async(this, null, function* () {
+    console.log(`[Moviesda] Parsing movie page: ${url}`);
+    try {
+      const response = yield fetchWithTimeout(url, { headers: HEADERS }, 8e3);
+      const html = yield response.text();
+      const $ = cheerio.load(html);
+      const streams = [];
+      const originalLink = $('a[href*="-original-movie"]');
+      if (originalLink.length > 0) {
+        const originalUrl = originalLink.attr("href");
+        const fullOriginalUrl = originalUrl.startsWith("http") ? originalUrl : `${MAIN_URL}${originalUrl}`;
+        console.log(`[Moviesda] Found original page link: ${fullOriginalUrl}`);
+        return yield parseOriginalPage(fullOriginalUrl);
+      }
+      const qualityLinks = [];
+      $("a").each((i, el) => {
+        const href = $(el).attr("href");
+        const text = $(el).text().trim();
+        if (href && text.match(/\b(360p|480p|720p|1080p|4K)\s*HD\b/i)) {
+          const qualityMatch = text.match(/\b(360p|480p|720p|1080p|4K)\b/i);
+          const quality = qualityMatch ? qualityMatch[0] : "Unknown";
+          const fullUrl = href.startsWith("http") ? href : `${MAIN_URL}${href}`;
+          qualityLinks.push({ url: fullUrl, quality });
+        }
+      });
+      if (qualityLinks.length > 0) {
+        console.log(`[Moviesda] Found ${qualityLinks.length} quality pages`);
+        for (const qualityLink of qualityLinks) {
+          const qualityStreams = yield parseQualityPage(qualityLink.url, qualityLink.quality);
+          qualityStreams.forEach((s) => {
+            if (!s.text)
+              s.text = qualityLink.text || "";
+          });
+          streams.push(...qualityStreams);
+        }
+        return streams;
+      }
+      const downloadLinks = [];
+      $("a").each((i, el) => {
+        const href = $(el).attr("href");
+        const text = $(el).text().trim();
+        if (href && href.includes("/download/")) {
+          const fullUrl = href.startsWith("http") ? href : `${MAIN_URL}${href}`;
+          downloadLinks.push({ url: fullUrl, text });
+        }
+      });
+      if (downloadLinks.length > 0) {
+        console.log(`[Moviesda] Found ${downloadLinks.length} download links on quality page`);
+        downloadLinks.forEach((link) => {
+          streams.push({
+            url: link.url,
+            quality: "Unknown",
+            type: "download"
+          });
+        });
+      }
+      console.log(`[Moviesda] Found ${streams.length} streams on page`);
+      return streams;
+    } catch (error) {
+      console.error("[Moviesda] Movie page parse error:", error.message);
+      return [];
+    }
+  });
+}
+function parseOriginalPage(url) {
+  return __async(this, null, function* () {
+    console.log(`[Moviesda] Parsing original page: ${url}`);
+    try {
+      const response = yield fetchWithTimeout(url, { headers: HEADERS }, 8e3);
+      const html = yield response.text();
+      const $ = cheerio.load(html);
+      const streams = [];
+      $("a").each((i, el) => {
+        const href = $(el).attr("href");
+        const text = $(el).text().trim();
+        if (href && text.match(/\b(360p|480p|720p|1080p|4K)\s*HD\b/i)) {
+          const qualityMatch = text.match(/\b(360p|480p|720p|1080p|4K)\b/i);
+          const quality = qualityMatch ? qualityMatch[0] : "Unknown";
+          const fullUrl = href.startsWith("http") ? href : `${MAIN_URL}${href}`;
+          streams.push({
+            url: fullUrl,
+            quality,
+            type: "quality_page"
+          });
+        }
+      });
+      console.log(`[Moviesda] Found ${streams.length} quality pages on original page`);
+      const finalStreams = [];
+      for (const stream of streams) {
+        const qualityStreams = yield parseQualityPage(stream.url, stream.quality);
+        finalStreams.push(...qualityStreams);
+      }
+      return finalStreams;
+    } catch (error) {
+      console.error("[Moviesda] Original page parse error:", error.message);
+      return [];
+    }
+  });
+}
+function parseQualityPage(url, quality) {
+  return __async(this, null, function* () {
+    console.log(`[Moviesda] Parsing quality page (${quality}): ${url}`);
+    try {
+      const response = yield fetchWithTimeout(url, { headers: HEADERS }, 8e3);
+      const html = yield response.text();
+      const $ = cheerio.load(html);
+      const streams = [];
+      $("a").each((i, el) => {
+        const href = $(el).attr("href");
+        const text = $(el).text().trim();
+        if (href && href.includes("/download/")) {
+          const fullUrl = href.startsWith("http") ? href : `${MAIN_URL}${href}`;
+          streams.push({
+            url: fullUrl,
+            quality,
+            type: "download",
+            text
+            // Keep text for size extraction
+          });
+        }
+      });
+      console.log(`[Moviesda] Found ${streams.length} download links for ${quality}`);
+      return streams;
+    } catch (error) {
+      console.error(`[Moviesda] Quality page parse error (${quality}): ${error.message}`);
+      return [];
+    }
+  });
+}
+function extractFinalDownloadUrl(downloadPageUrl) {
+  return __async(this, null, function* () {
+    console.log(`[Moviesda] Extracting final URL from: ${downloadPageUrl}`);
+    try {
+      const response = yield fetchWithTimeout(downloadPageUrl, { headers: HEADERS }, 8e3);
+      const html = yield response.text();
+      const $ = cheerio.load(html);
+      const downloadLinks = [];
+      $("a").each((i, el) => {
+        const href = $(el).attr("href");
+        const text = $(el).text().trim().toLowerCase();
+        if (href && !href.includes("moviesda15.com") && !href.includes("/tamil-movies/") && !href.startsWith("#") && (text.includes("download") || text.includes("server"))) {
+          const fullUrl = href.startsWith("http") ? href : `https:${href}`;
+          downloadLinks.push(fullUrl);
+        }
+      });
+      if (downloadLinks.length > 0) {
+        const downloadUrl = downloadLinks[0];
+        console.log(`[Moviesda] Found download URL: ${downloadUrl}`);
+        if (downloadUrl.includes("download.moviespage.xyz/download/file/")) {
+          const fileIdMatch = downloadUrl.match(/\/file\/(\d+)/);
+          if (fileIdMatch) {
+            const fileId = fileIdMatch[1];
+            const streamUrl = `https://play.onestream.today/stream/page/${fileId}`;
+            console.log(`[Moviesda] Converted to onestream URL: ${streamUrl}`);
+            return { url: streamUrl, needsExtraction: true };
+          }
+        }
+        return { url: downloadUrl, needsExtraction: false };
+      }
+      console.log(`[Moviesda] No final download URL found on page`);
+      return null;
+    } catch (error) {
+      console.error(`[Moviesda] Error extracting final URL: ${error.message}`);
+      return null;
+    }
+  });
+}
+function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) {
+  return __async(this, null, function* () {
+    console.log(`[Moviesda] Processing ${mediaType} ${tmdbId}`);
+    try {
+      let mediaInfo;
+      const imdbMatch = tmdbId.match(/^[Tt][Tt]?(\d+)$/);
+      if (imdbMatch) {
+        mediaInfo = yield resolveImdbId(imdbMatch[0]);
+        if (!mediaInfo) {
+          console.log(`[Moviesda] IMDb resolve failed for "${tmdbId}", using as-is`);
+          mediaInfo = { title: tmdbId, year: null };
+        }
+      } else {
+        const numericId = tmdbId.replace(/^[^\d]+/, "");
+        const isNumericId = /^\d+$/.test(numericId);
+        if (isNumericId) {
+          try {
+            mediaInfo = yield getTMDBDetails(numericId, mediaType);
+          } catch (error) {
+            console.log(`[Moviesda] TMDB fetch failed, using "${tmdbId}" as search query`);
+            mediaInfo = { title: tmdbId, year: null };
+          }
+        } else {
+          console.log(`[Moviesda] Using "${tmdbId}" as search query`);
+          try {
+            const tmdbResult = yield searchTMDBByTitle(tmdbId, mediaType);
+            if (tmdbResult && tmdbResult.year) {
+              mediaInfo = tmdbResult;
+            } else {
+              mediaInfo = { title: tmdbId, year: null };
+            }
+          } catch (error) {
+            console.log(`[Moviesda] TMDB search failed: ${error.message}`);
+            mediaInfo = { title: tmdbId, year: null };
+          }
+        }
+      }
+      try {
+        const workingDomain = yield getReadyDomain();
+        if (workingDomain !== MAIN_URL) {
+          console.log(`[Moviesda] Switching MAIN_URL: ${MAIN_URL} -> ${workingDomain}`);
+          MAIN_URL = workingDomain;
+          HEADERS.Referer = `${MAIN_URL}/`;
+        }
+      } catch (e) {
+        console.log(`[Moviesda] Domain discovery failed: ${e.message}`);
+      }
+      console.log(`[Moviesda] Looking for: "${mediaInfo.title}" (${mediaInfo.year || "N/A"})`);
+      let searchResults = yield search(mediaInfo.title, mediaInfo.year);
+      const bestMatch = findBestTitleMatch(mediaInfo, searchResults);
+      if (!bestMatch) {
+        console.warn("[Moviesda] No matching title found in category pages");
+        const currentYear = (/* @__PURE__ */ new Date()).getFullYear();
+        const yearsToTry = mediaInfo.year ? [mediaInfo.year, currentYear, currentYear - 1] : (
+          // Try recent years first (most likely), then expand backwards to 2010
+          [
+            currentYear,
+            currentYear - 1,
+            currentYear + 1,
+            currentYear - 2,
+            currentYear - 3,
+            currentYear - 4
+          ]
+        );
+        for (const year of yearsToTry) {
+          const slug = mediaInfo.title.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, "-");
+          const directUrl = `${MAIN_URL}/${slug}-${year}-tamil-movie/`;
+          console.log(`[Moviesda] Trying direct URL: ${directUrl}`);
+          try {
+            const response = yield fetchWithTimeout(directUrl, { headers: HEADERS }, 5e3);
+            if (response.ok) {
+              const html = yield response.text();
+              if (html.includes("entry-title") || html.includes("movie")) {
+                console.log(`[Moviesda] \u2713 Direct URL found: ${directUrl}`);
+                const rawStreams2 = yield parseMoviePage(directUrl);
+                if (rawStreams2.length > 0) {
+                  const limitedStreams2 = rawStreams2.slice(0, 5);
+                  const finalStreams2 = [];
+                  for (const stream of limitedStreams2) {
+                    let finalUrl = stream.url;
+                    if (stream.type === "download") {
+                      try {
+                        const result = yield Promise.race([
+                          extractFinalDownloadUrl(stream.url),
+                          new Promise(
+                            (_, reject) => setTimeout(() => reject(new Error("Extraction timeout")), 5e3)
+                          )
+                        ]);
+                        if (!result)
+                          continue;
+                        if (result.needsExtraction) {
+                          try {
+                            const directUrl2 = yield Promise.race([
+                              extractFromOnestream(result.url),
+                              new Promise(
+                                (_, reject) => setTimeout(() => reject(new Error("Onestream extraction timeout")), 5e3)
+                              )
+                            ]);
+                            if (!directUrl2)
+                              continue;
+                            finalUrl = directUrl2;
+                          } catch (error) {
+                            console.error(`[Moviesda] Onestream extraction failed: ${error.message}`);
+                            continue;
+                          }
+                        } else {
+                          finalUrl = result.url;
+                        }
+                      } catch (error) {
+                        console.error(`[Moviesda] Download URL extraction failed: ${error.message}`);
+                        continue;
+                      }
+                    }
+                    finalStreams2.push({
+                      name: "Moviesda",
+                      title: formatStreamTitle(mediaInfo, stream),
+                      url: finalUrl,
+                      quality: stream.quality || "Unknown",
+                      headers: {
+                        "Referer": MAIN_URL,
+                        "User-Agent": HEADERS["User-Agent"]
+                      },
+                      provider: "Moviesda"
+                    });
+                  }
+                  console.log(`[Moviesda] Successfully extracted ${finalStreams2.length} streams`);
+                  return finalStreams2;
+                }
+              }
+            }
+          } catch (error) {
+            console.log(`[Moviesda] Direct URL failed for ${year}: ${error.message}`);
+          }
+        }
+        console.warn("[Moviesda] No results found via category search or direct URL");
+        return [];
+      }
+      console.log(`[Moviesda] Processing match: ${bestMatch.title}`);
+      const rawStreams = yield parseMoviePage(bestMatch.href);
+      if (rawStreams.length === 0) {
+        console.warn("[Moviesda] No streams found on movie page");
+        return [];
+      }
+      const limitedStreams = rawStreams.slice(0, 5);
+      if (rawStreams.length > 5) {
+        console.log(`[Moviesda] Limiting to first 5 streams out of ${rawStreams.length}`);
+      }
+      const finalStreams = [];
+      for (const stream of limitedStreams) {
+        let finalUrl = stream.url;
+        if (stream.type === "download") {
+          try {
+            const result = yield Promise.race([
+              extractFinalDownloadUrl(stream.url),
+              new Promise(
+                (_, reject) => setTimeout(() => reject(new Error("Extraction timeout")), 5e3)
+              )
+            ]);
+            if (!result) {
+              console.log(`[Moviesda] Failed to extract final URL from download page, skipping`);
+              continue;
+            }
+            if (result.needsExtraction) {
+              console.log(`[Moviesda] URL needs extraction from onestream`);
+              try {
+                const directUrl = yield Promise.race([
+                  extractFromOnestream(result.url),
+                  new Promise(
+                    (_, reject) => setTimeout(() => reject(new Error("Onestream extraction timeout")), 5e3)
+                  )
+                ]);
+                if (!directUrl) {
+                  console.log(`[Moviesda] Failed to extract from onestream, skipping`);
+                  continue;
+                }
+                finalUrl = directUrl;
+              } catch (error) {
+                console.error(`[Moviesda] Onestream extraction failed: ${error.message}`);
+                continue;
+              }
+            } else {
+              finalUrl = result.url;
+            }
+          } catch (error) {
+            console.error(`[Moviesda] Download URL extraction failed: ${error.message}`);
+            continue;
+          }
+        } else if (stream.type === "embed") {
+          try {
+            const extractedUrl = yield Promise.race([
+              extractDirectStream(stream.url),
+              new Promise(
+                (_, reject) => setTimeout(() => reject(new Error("Extraction timeout")), 5e3)
+              )
+            ]);
+            if (!extractedUrl) {
+              console.log(`[Moviesda] Failed to extract from embed, skipping`);
+              continue;
+            }
+            finalUrl = extractedUrl;
+          } catch (error) {
+            console.error(`[Moviesda] Embed extraction failed: ${error.message}`);
+            continue;
+          }
+        }
+        finalStreams.push({
+          name: "Moviesda",
+          title: formatStreamTitle(mediaInfo, stream),
+          url: finalUrl,
+          quality: stream.quality || "Unknown",
+          headers: {
+            "Referer": MAIN_URL,
+            "User-Agent": HEADERS["User-Agent"]
+          },
+          provider: "Moviesda"
+        });
+      }
+      console.log(`[Moviesda] Successfully extracted ${finalStreams.length} streams`);
+      return finalStreams;
+    } catch (error) {
+      console.error("[Moviesda] getStreams failed:", error.message);
+      return [];
+    }
+  });
+}
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { getStreams };
+} else {
+  global.getStreams = { getStreams };
+}

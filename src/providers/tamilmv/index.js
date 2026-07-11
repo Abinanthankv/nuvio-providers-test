@@ -480,8 +480,11 @@ async function searchTamilMV(query, year = null) {
     try {
       console.log(`[TamilMV] Trying domain: ${domain}`);
       const homeResponse = await fetchWithTimeout(domain, { headers: { ...HEADERS, Referer: `${domain}/` } }, 8000);
-      if (homeResponse.ok) {
-        const homeHtml = await homeResponse.text();
+      const homeHtml = typeof homeResponse === 'string' ? homeResponse
+        : homeResponse && typeof homeResponse.text === 'function' ? await homeResponse.text()
+        : null;
+      if (!homeHtml) continue;
+      if (typeof homeResponse === 'string' || homeResponse.ok) {
         const watchLinks = extractHomepageWatchLinks(homeHtml);
         if (watchLinks.length > 0) {
           const matchingLinks = watchLinks.filter(link => {

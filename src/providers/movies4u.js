@@ -1,9 +1,455 @@
 /**
  * movies4u - Built from src/movies4u/
- * Generated: 2026-07-11T11:09:01.088Z
+ * Generated: 2026-07-11T11:32:14.626Z
  */
-var E=Object.defineProperty;var v=Object.getOwnPropertySymbols;var U=Object.prototype.hasOwnProperty,W=Object.prototype.propertyIsEnumerable;var $=(e,t,r)=>t in e?E(e,t,{enumerable:!0,configurable:!0,writable:!0,value:r}):e[t]=r,M=(e,t)=>{for(var r in t||(t={}))U.call(t,r)&&$(e,r,t[r]);if(v)for(var r of v(t))W.call(t,r)&&$(e,r,t[r]);return e};var g=(e,t,r)=>new Promise((c,s)=>{var o=n=>{try{i(r.next(n))}catch(a){s(a)}},l=n=>{try{i(r.throw(n))}catch(a){s(a)}},i=n=>n.done?c(n.value):Promise.resolve(n.value).then(o,l);i((r=r.apply(e,t)).next())});var z=require("cheerio-without-node-native"),T="1b3113663c9004682ed61086cf967c44",N="https://api.themoviedb.org/3",L="https://movies4u.mw";var w={"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",Referer:`${L}/`},A=[/mdrive\.(buzz|ink)/i,/gdflix\.(dev|app)/i,/hubcloud/i,/gdxcloud/i,/vcloud\.zip/i,/filebee\.xyz/i,/filepress/i,/fastdl\.zip/i,/busycdn\.xyz/i,/fastcdn-dl/i,/goflix\.sbs/i,/nexdrive/i,/pub-[a-z0-9]+\.r2\.dev/i,/gamerxyt\.com/i,/cdn\.fsl-buckets\.life/i,/fsl\.gigabytes\.icu/i,/cdn\.fukggl\.buzz/i,/hubcloud\.fans/i],B=[/google(apis)?\./i,/cloudflare/i,/cdnjs\./i,/facebook/i,/twitter/i,/bit\.ly/i,/tinyurl/i,/w3\.org/i,/googletagmanager/i,/fonts\.googleapis/i,/gstatic/i,/gravatar\.com/i,/linkedin/i,/instagram/i,/youtube/i,/github/i,/wordpress/i,/litespeed/i,/megaup\.net/i,/gofile\.io/i,/vikingfile/i,/gdflix\.(dev|app)/i];function m(c){return g(this,arguments,function*(e,t={},r=1e4){return Promise.race([fetch(e,M({},t)),new Promise((s,o)=>setTimeout(()=>o(new Error(`Timeout after ${r}ms`)),r))])})}function b(e){return e?e.toLowerCase().replace(/[^a-z0-9\s]/g,"").replace(/\s+/g," ").trim():""}function R(e,t){let r=b(e),c=b(t);if(r===c)return 1;if(r.includes(c)||c.includes(r))return .9;let s=new Set(r.split(/\s+/).filter(n=>n.length>2)),o=new Set(c.split(/\s+/).filter(n=>n.length>2));if(s.size===0||o.size===0)return 0;let l=new Set([...s].filter(n=>o.has(n))),i=new Set([...s,...o]);return l.size/i.size}function K(e,t){if(!t||t.length===0)return null;let r=e.title.toLowerCase().replace(/[^a-z0-9]/g,""),c=e.year?parseInt(e.year):null,s=null,o=0;for(let l of t){let i=l.title.toLowerCase().replace(/[^a-z0-9]/g,""),n=R(e.title,l.title),a=i.includes(r)||r.includes(i),p=!c||l.title.includes(c.toString())||l.title.includes((c+1).toString())||l.title.includes((c-1).toString());a&&p&&(n+=.5),n>o&&(o=n,s=l)}return s&&o>.4?(console.log(`[Movies4u] Best title match: "${s.title}" (score: ${o.toFixed(2)})`),s):null}function C(e,t){let r=t.quality||"Unknown",c=e.title||"Unknown",s=e.year||"";if(!s||s==="N/A"){let d=(c+" "+(t.text||"")).match(/\b(19|20)\d{2}\b/);d&&(s=d[0])}let o="UNKNOWN",l=t.text?t.text.match(/(\d+(?:\.\d+)?\s*(?:GB|MB))/i):null;l&&(o=l[1].toUpperCase());let i="UNKNOWN",n=((t.text||"")+" "+(t.url||"")+" "+(t.label||"")).toLowerCase();n.includes("bluray")||n.includes("brrip")?i="BluRay":n.includes("web-dl")?i="WEB-DL":n.includes("webrip")?i="WEBRip":n.includes("hdrip")?i="HDRip":n.includes("dvdrip")?i="DVDRip":n.includes("bdrip")?i="BDRip":n.includes("hdtv")&&(i="HDTV");let a=s?` (${s})`:"",p=r,u=i&&i!=="UNKNOWN"?`\u{1F4FA}: ${i}
-`:"",h=o&&o!=="UNKNOWN"?`\u{1F4BE}: ${o} | \u{1F69C}: movies4u
-`:"";return`Movies4u (Instant) (${p})
-${u}\u{1F4FC}: ${c}${a} - ${p}
-${h}\u{1F310}: UNKNOWN`}function S(e){return/1080p|2160p/i.test(e)?"1080p":/720p/i.test(e)?"720p":/480p/i.test(e)?"480p":/4K/i.test(e)?"4K":"HD"}function P(e){return A.some(t=>t.test(e))}function q(e){return B.some(t=>t.test(e))}function H(e){let t=new Set,r=[/https?:\/\/pub-[a-z0-9]+\.r2\.dev\/[^\"'\\s<>]+\.(?:mp4|mkv|webm)(?:\?[^\"'\\s<>]*)?/gi,/https?:\/\/[^\"'\\s<>]+\.(?:mp4|mkv|webm)(?:\?[^\"'\\s<>]*)?/gi,/https?:\/\/[^\"'\\s<>]+\.(?:m3u8|txt)(?:\?[^\"'\\s<>]*)?/gi];for(let c of r){let s=e.match(c);s&&s.forEach(o=>t.add(o))}return[...t]}function k(e,t){let r="";try{r=t?new URL(t).origin:""}catch(l){}let c=[...e.matchAll(/<a[^>]*href=\"([^\"]+)\"[^>]*>/gi)],s=[],o=new Set;for(let[,l]of c)try{let i=l.trim();if(i.startsWith("//")?i="https:"+i:i.startsWith("/")&&r&&(i=r+i),!i.startsWith("http")||(new URL(i),o.has(i)))continue;o.add(i),s.push(i)}catch(i){}return s}function _(s){return g(this,arguments,function*(e,t=0,r=2,c=new Set){if(t>r||c.has(e))return[];c.add(e);let o=[];try{let l=yield m(e,{headers:w,redirect:"follow"},8e3),i=l.headers.get("content-type")||"";if(i.startsWith("video/")||/\.(mp4|mkv|webm|m3u8)(\?|$)/i.test(e))return console.log(`[Movies4u] Direct video: ${e.substring(0,80)}`),[{url:e,quality:S(e),isMaster:!1}];if(!i.includes("text/html")&&!i.includes("application/json"))return o;let n=yield l.text(),a=H(n),p=k(n,e).filter(u=>/\.(mp4|mkv|webm|m3u8)(\?|$)/i.test(u));for(let u of p)a.includes(u)||(a=[...a,u]);for(let u of a)c.has(u)||(c.add(u),o.push({url:u,quality:S(u),isMaster:!1}));if(t<r){let h=k(n,e).filter(f=>P(f)&&!q(f)),d=5;for(let f=0;f<h.length;f+=d){let D=h.slice(f,f+d);(yield Promise.all(D.map(y=>_(y,t+1,r,c)))).forEach(y=>o.push(...y))}}}catch(l){t===0&&console.error(`[Movies4u] Extract error: ${l.message}`)}return o})}function O(e){return new Promise(t=>g(this,null,function*(){try{console.log(`[Movies4u] Extracting watch links from: ${e}`);let c=yield(yield m(e,{headers:w},8e3)).text(),s=z.load(c),o=[];s("a").each((l,i)=>{let n=s(i).attr("href"),a=s(i).text().trim();n&&(n.includes("m4uplay")||n.includes("mdrive.ink")||n.includes("filepress")||n.includes("mdrive.buzz"))&&o.push({url:n,quality:a.includes("1080p")?"1080p":a.includes("720p")?"720p":a.includes("480p")?"480p":a.includes("4K")||a.includes("2160p")?"4K":"HD",label:a})}),console.log(`[Movies4u] Found ${o.length} watch links`),t(o)}catch(r){console.error(`[Movies4u] Error extracting watch links: ${r.message}`),t([])}}))}function F(e,t){return g(this,null,function*(){let c=`${N}/${t==="movie"?"movie":"tv"}/${e}?api_key=${T}`,s=yield m(c,{},8e3);if(!s.ok)throw new Error(`TMDB error: ${s.status}`);let o=yield s.json();return{title:o.title||o.name,year:(o.release_date||o.first_air_date||"").split("-")[0]}})}function V(e){return g(this,null,function*(){var t,r;try{let c=`${N}/find/${e}?api_key=${T}&external_source=imdb_id`,o=yield(yield m(c,{},8e3)).json(),l=(t=o.movie_results)==null?void 0:t[0],i=(r=o.tv_results)==null?void 0:r[0];if(l){let n={title:l.title,year:(l.release_date||"").split("-")[0]};return console.log(`[Movies4u] IMDb ${e} -> Movie: "${n.title}" (${n.year||"N/A"})`),n}if(i){let n={title:i.name,year:(i.first_air_date||"").split("-")[0]};return console.log(`[Movies4u] IMDb ${e} -> TV: "${n.title}" (${n.year||"N/A"})`),n}return console.log(`[Movies4u] IMDb ${e} not found on TMDB`),null}catch(c){return console.error(`[Movies4u] Error resolving IMDb ID ${e}:`,c.message),null}})}function j(e){return g(this,null,function*(){try{let t=`${L}/?s=${encodeURIComponent(e)}`;console.log(`[Movies4u] Searching: ${t}`);let c=yield(yield m(t,{headers:w},8e3)).text(),s=z.load(c),o=[];return s(".entry-title a").each((l,i)=>{let n=s(i).text().trim(),a=s(i).attr("href");n&&a&&o.push({title:n,url:a})}),console.log(`[Movies4u] Found ${o.length} search results`),o}catch(t){return console.error(`[Movies4u] Search error: ${t.message}`),[]}})}function x(e,t="movie",r=null,c=null){return g(this,null,function*(){console.log(`[Movies4u] Processing ${t} ${e}`);try{let s,o=e.match(/^[Tt][Tt]?(\d+)$/);if(o)s=yield V(o[0]),s||(console.log(`[Movies4u] IMDb resolve failed for "${e}", using as-is`),s={title:e,year:null});else{let h=e.replace(/^[^\d]+/,"");if(/^\d+$/.test(h))try{s=yield F(h,t)}catch(f){s={title:e,year:null}}else s={title:e,year:null}}let l=yield j(s.title);if(l.length===0)return[];let i=K(s,l);if(!i)return[];console.log(`[Movies4u] Found match: ${i.title}`);let n=i.title.match(/\((20\d{2}|19\d{2})\)/);s.title.toLowerCase()===e.toLowerCase()&&(s.title=i.title.split("(")[0].trim(),n&&(s.year=n[1]));let a=yield O(i.url);if(a.length===0)return[];let p=[],u=new Set;for(let h of a){let d=yield _(h.url,0,2,u);for(let f of d)f.url&&p.push({name:"Movies4u",title:C(s,f),url:f.url,quality:f.quality||h.quality,headers:{Referer:h.url}})}return console.log(`[Movies4u] Extracted ${p.length} streams`),p}catch(s){return console.error("[Movies4u] getStreams failed:",s.message),[]}})}typeof module!="undefined"&&module.exports?module.exports={getStreams:x}:global.getStreams={getStreams:x};
+var __defProp = Object.defineProperty;
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __spreadValues = (a, b) => {
+  for (var prop in b || (b = {}))
+    if (__hasOwnProp.call(b, prop))
+      __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b)) {
+      if (__propIsEnum.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    }
+  return a;
+};
+var __async = (__this, __arguments, generator) => {
+  return new Promise((resolve, reject) => {
+    var fulfilled = (value) => {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var rejected = (value) => {
+      try {
+        step(generator.throw(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    step((generator = generator.apply(__this, __arguments)).next());
+  });
+};
+
+// src/providers/movies4u/index.js
+var cheerio = require("cheerio-without-node-native");
+var TMDB_API_KEY = "1b3113663c9004682ed61086cf967c44";
+var TMDB_BASE_URL = "https://api.themoviedb.org/3";
+var MAIN_URL = "https://movies4u.mw";
+var HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+  "Referer": `${MAIN_URL}/`
+};
+var FILE_HOST_PATTERNS = [
+  /mdrive\.(buzz|ink)/i,
+  /gdflix\.(dev|app)/i,
+  /hubcloud/i,
+  /gdxcloud/i,
+  /vcloud\.zip/i,
+  /filebee\.xyz/i,
+  /filepress/i,
+  /fastdl\.zip/i,
+  /busycdn\.xyz/i,
+  /fastcdn-dl/i,
+  /goflix\.sbs/i,
+  /nexdrive/i,
+  /pub-[a-z0-9]+\.r2\.dev/i,
+  /gamerxyt\.com/i,
+  /cdn\.fsl-buckets\.life/i,
+  /fsl\.gigabytes\.icu/i,
+  /cdn\.fukggl\.buzz/i,
+  /hubcloud\.fans/i
+];
+var SKIP_HOST_PATTERNS = [
+  /google(apis)?\./i,
+  /cloudflare/i,
+  /cdnjs\./i,
+  /facebook/i,
+  /twitter/i,
+  /bit\.ly/i,
+  /tinyurl/i,
+  /w3\.org/i,
+  /googletagmanager/i,
+  /fonts\.googleapis/i,
+  /gstatic/i,
+  /gravatar\.com/i,
+  /linkedin/i,
+  /instagram/i,
+  /youtube/i,
+  /github/i,
+  /wordpress/i,
+  /litespeed/i,
+  /megaup\.net/i,
+  /gofile\.io/i,
+  /vikingfile/i,
+  /gdflix\.(dev|app)/i
+];
+function fetchWithTimeout(_0) {
+  return __async(this, arguments, function* (url, options = {}, timeout = 1e4) {
+    return Promise.race([
+      fetch(url, __spreadValues({}, options)),
+      new Promise(
+        (_, reject) => setTimeout(() => reject(new Error(`Timeout after ${timeout}ms`)), timeout)
+      )
+    ]);
+  });
+}
+function normalizeTitle(title) {
+  if (!title)
+    return "";
+  return title.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
+}
+function calculateTitleSimilarity(title1, title2) {
+  const norm1 = normalizeTitle(title1);
+  const norm2 = normalizeTitle(title2);
+  if (norm1 === norm2)
+    return 1;
+  if (norm1.includes(norm2) || norm2.includes(norm1))
+    return 0.9;
+  const words1 = new Set(norm1.split(/\s+/).filter((w) => w.length > 2));
+  const words2 = new Set(norm2.split(/\s+/).filter((w) => w.length > 2));
+  if (words1.size === 0 || words2.size === 0)
+    return 0;
+  const intersection = new Set([...words1].filter((w) => words2.has(w)));
+  const union = /* @__PURE__ */ new Set([...words1, ...words2]);
+  return intersection.size / union.size;
+}
+function findBestTitleMatch(mediaInfo, searchResults) {
+  if (!searchResults || searchResults.length === 0)
+    return null;
+  const targetTitle = mediaInfo.title.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const targetYear = mediaInfo.year ? parseInt(mediaInfo.year) : null;
+  let bestMatch = null;
+  let bestScore = 0;
+  for (const result of searchResults) {
+    const normalizedResultTitle = result.title.toLowerCase().replace(/[^a-z0-9]/g, "");
+    let score = calculateTitleSimilarity(mediaInfo.title, result.title);
+    const titleMatch = normalizedResultTitle.includes(targetTitle) || targetTitle.includes(normalizedResultTitle);
+    const yearMatch = !targetYear || result.title.includes(targetYear.toString()) || result.title.includes((targetYear + 1).toString()) || result.title.includes((targetYear - 1).toString());
+    if (titleMatch && yearMatch)
+      score += 0.5;
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = result;
+    }
+  }
+  if (bestMatch && bestScore > 0.4) {
+    console.log(`[Movies4u] Best title match: "${bestMatch.title}" (score: ${bestScore.toFixed(2)})`);
+    return bestMatch;
+  }
+  return null;
+}
+function formatStreamTitle(mediaInfo, stream) {
+  const quality = stream.quality || "Unknown";
+  const title = mediaInfo.title || "Unknown";
+  let year = mediaInfo.year || "";
+  if (!year || year === "N/A") {
+    const yearMatch = (title + " " + (stream.text || "")).match(/\b(19|20)\d{2}\b/);
+    if (yearMatch)
+      year = yearMatch[0];
+  }
+  let size = "UNKNOWN";
+  const sizeMatch = stream.text ? stream.text.match(/(\d+(?:\.\d+)?\s*(?:GB|MB))/i) : null;
+  if (sizeMatch)
+    size = sizeMatch[1].toUpperCase();
+  let type = "UNKNOWN";
+  const searchString = ((stream.text || "") + " " + (stream.url || "") + " " + (stream.label || "")).toLowerCase();
+  if (searchString.includes("bluray") || searchString.includes("brrip"))
+    type = "BluRay";
+  else if (searchString.includes("web-dl"))
+    type = "WEB-DL";
+  else if (searchString.includes("webrip"))
+    type = "WEBRip";
+  else if (searchString.includes("hdrip"))
+    type = "HDRip";
+  else if (searchString.includes("dvdrip"))
+    type = "DVDRip";
+  else if (searchString.includes("bdrip"))
+    type = "BDRip";
+  else if (searchString.includes("hdtv"))
+    type = "HDTV";
+  const yearStr = year ? ` (${year})` : "";
+  const displayQuality = quality;
+  const typeLine = type && type !== "UNKNOWN" ? `\u{1F4FA}: ${type}
+` : "";
+  const sizeLine = size && size !== "UNKNOWN" ? `\u{1F4BE}: ${size} | \u{1F69C}: movies4u
+` : "";
+  return `Movies4u (Instant) (${displayQuality})
+${typeLine}\u{1F4FC}: ${title}${yearStr} - ${displayQuality}
+${sizeLine}\u{1F310}: UNKNOWN`;
+}
+function extractQuality(text) {
+  if (/1080p|2160p/i.test(text))
+    return "1080p";
+  if (/720p/i.test(text))
+    return "720p";
+  if (/480p/i.test(text))
+    return "480p";
+  if (/4K/i.test(text))
+    return "4K";
+  return "HD";
+}
+function isFileHost(url) {
+  return FILE_HOST_PATTERNS.some((p) => p.test(url));
+}
+function isSkippable(url) {
+  return SKIP_HOST_PATTERNS.some((p) => p.test(url));
+}
+function extractDirectVideoUrls(html) {
+  const urls = /* @__PURE__ */ new Set();
+  const patterns = [
+    /https?:\/\/pub-[a-z0-9]+\.r2\.dev\/[^\"'\\s<>]+\.(?:mp4|mkv|webm)(?:\?[^\"'\\s<>]*)?/gi,
+    /https?:\/\/[^\"'\\s<>]+\.(?:mp4|mkv|webm)(?:\?[^\"'\\s<>]*)?/gi,
+    /https?:\/\/[^\"'\\s<>]+\.(?:m3u8|txt)(?:\?[^\"'\\s<>]*)?/gi
+  ];
+  for (const p of patterns) {
+    const matches = html.match(p);
+    if (matches)
+      matches.forEach((u) => urls.add(u));
+  }
+  return [...urls];
+}
+function extractExternalLinks(html, baseUrl) {
+  let base = "";
+  try {
+    base = baseUrl ? new URL(baseUrl).origin : "";
+  } catch (e) {
+  }
+  const anchors = [...html.matchAll(/<a[^>]*href=\"([^\"]+)\"[^>]*>/gi)];
+  const links = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const [, href] of anchors) {
+    try {
+      let url = href.trim();
+      if (url.startsWith("//"))
+        url = "https:" + url;
+      else if (url.startsWith("/") && base)
+        url = base + url;
+      if (!url.startsWith("http"))
+        continue;
+      new URL(url);
+      if (seen.has(url))
+        continue;
+      seen.add(url);
+      links.push(url);
+    } catch (e) {
+    }
+  }
+  return links;
+}
+function smartExtract(_0) {
+  return __async(this, arguments, function* (url, depth = 0, maxDepth = 2, visited = /* @__PURE__ */ new Set()) {
+    if (depth > maxDepth || visited.has(url))
+      return [];
+    visited.add(url);
+    const streams = [];
+    try {
+      const res = yield fetchWithTimeout(url, { headers: HEADERS, redirect: "follow" }, 8e3);
+      const ct = res.headers.get("content-type") || "";
+      if (ct.startsWith("video/") || /\.(mp4|mkv|webm|m3u8)(\?|$)/i.test(url)) {
+        console.log(`[Movies4u] Direct video: ${url.substring(0, 80)}`);
+        return [{ url, quality: extractQuality(url), isMaster: false }];
+      }
+      if (!ct.includes("text/html") && !ct.includes("application/json"))
+        return streams;
+      const html = yield res.text();
+      let directUrls = extractDirectVideoUrls(html);
+      const anchorVideos = extractExternalLinks(html, url).filter((l) => /\.(mp4|mkv|webm|m3u8)(\?|$)/i.test(l));
+      for (const u of anchorVideos) {
+        if (!directUrls.includes(u))
+          directUrls = [...directUrls, u];
+      }
+      for (const u of directUrls) {
+        if (!visited.has(u)) {
+          visited.add(u);
+          streams.push({ url: u, quality: extractQuality(u), isMaster: false });
+        }
+      }
+      if (depth < maxDepth) {
+        const links = extractExternalLinks(html, url);
+        const hostLinks = links.filter((l) => isFileHost(l) && !isSkippable(l));
+        const batchSize = 5;
+        for (let i = 0; i < hostLinks.length; i += batchSize) {
+          const batch = hostLinks.slice(i, i + batchSize);
+          const results = yield Promise.all(batch.map(
+            (link) => smartExtract(link, depth + 1, maxDepth, visited)
+          ));
+          results.forEach((r) => streams.push(...r));
+        }
+      }
+    } catch (e) {
+      if (depth === 0)
+        console.error(`[Movies4u] Extract error: ${e.message}`);
+    }
+    return streams;
+  });
+}
+function extractWatchLinks(movieUrl) {
+  return new Promise((resolve) => __async(this, null, function* () {
+    try {
+      console.log(`[Movies4u] Extracting watch links from: ${movieUrl}`);
+      const response = yield fetchWithTimeout(movieUrl, { headers: HEADERS }, 8e3);
+      const html = yield response.text();
+      const $ = cheerio.load(html);
+      const watchLinks = [];
+      $("a").each((i, el) => {
+        const href = $(el).attr("href");
+        const text = $(el).text().trim();
+        if (href && (href.includes("m4uplay") || href.includes("mdrive.ink") || href.includes("filepress") || href.includes("mdrive.buzz"))) {
+          watchLinks.push({
+            url: href,
+            quality: text.includes("1080p") ? "1080p" : text.includes("720p") ? "720p" : text.includes("480p") ? "480p" : text.includes("4K") || text.includes("2160p") ? "4K" : "HD",
+            label: text
+          });
+        }
+      });
+      console.log(`[Movies4u] Found ${watchLinks.length} watch links`);
+      resolve(watchLinks);
+    } catch (error) {
+      console.error(`[Movies4u] Error extracting watch links: ${error.message}`);
+      resolve([]);
+    }
+  }));
+}
+function getTMDBDetails(tmdbId, mediaType) {
+  return __async(this, null, function* () {
+    const type = mediaType === "movie" ? "movie" : "tv";
+    const url = `${TMDB_BASE_URL}/${type}/${tmdbId}?api_key=${TMDB_API_KEY}`;
+    const response = yield fetchWithTimeout(url, {}, 8e3);
+    if (!response.ok)
+      throw new Error(`TMDB error: ${response.status}`);
+    const data = yield response.json();
+    return {
+      title: data.title || data.name,
+      year: (data.release_date || data.first_air_date || "").split("-")[0]
+    };
+  });
+}
+function resolveImdbId(imdbId) {
+  return __async(this, null, function* () {
+    var _a, _b;
+    try {
+      const url = `${TMDB_BASE_URL}/find/${imdbId}?api_key=${TMDB_API_KEY}&external_source=imdb_id`;
+      const response = yield fetchWithTimeout(url, {}, 8e3);
+      const data = yield response.json();
+      const movie = (_a = data.movie_results) == null ? void 0 : _a[0];
+      const tv = (_b = data.tv_results) == null ? void 0 : _b[0];
+      if (movie) {
+        const info = { title: movie.title, year: (movie.release_date || "").split("-")[0] };
+        console.log(`[Movies4u] IMDb ${imdbId} -> Movie: "${info.title}" (${info.year || "N/A"})`);
+        return info;
+      }
+      if (tv) {
+        const info = { title: tv.name, year: (tv.first_air_date || "").split("-")[0] };
+        console.log(`[Movies4u] IMDb ${imdbId} -> TV: "${info.title}" (${info.year || "N/A"})`);
+        return info;
+      }
+      console.log(`[Movies4u] IMDb ${imdbId} not found on TMDB`);
+      return null;
+    } catch (error) {
+      console.error(`[Movies4u] Error resolving IMDb ID ${imdbId}:`, error.message);
+      return null;
+    }
+  });
+}
+function searchMovies(query) {
+  return __async(this, null, function* () {
+    try {
+      const searchUrl = `${MAIN_URL}/?s=${encodeURIComponent(query)}`;
+      console.log(`[Movies4u] Searching: ${searchUrl}`);
+      const response = yield fetchWithTimeout(searchUrl, { headers: HEADERS }, 8e3);
+      const html = yield response.text();
+      const $ = cheerio.load(html);
+      const results = [];
+      $(".entry-title a").each((i, el) => {
+        const title = $(el).text().trim();
+        const url = $(el).attr("href");
+        if (title && url)
+          results.push({ title, url });
+      });
+      console.log(`[Movies4u] Found ${results.length} search results`);
+      return results;
+    } catch (error) {
+      console.error(`[Movies4u] Search error: ${error.message}`);
+      return [];
+    }
+  });
+}
+function getStreams(tmdbId, mediaType = "movie", season = null, episode = null) {
+  return __async(this, null, function* () {
+    console.log(`[Movies4u] Processing ${mediaType} ${tmdbId}`);
+    try {
+      let mediaInfo;
+      const imdbMatch = tmdbId.match(/^[Tt][Tt]?(\d+)$/);
+      if (imdbMatch) {
+        mediaInfo = yield resolveImdbId(imdbMatch[0]);
+        if (!mediaInfo) {
+          console.log(`[Movies4u] IMDb resolve failed for "${tmdbId}", using as-is`);
+          mediaInfo = { title: tmdbId, year: null };
+        }
+      } else {
+        const numericId = tmdbId.replace(/^[^\d]+/, "");
+        const isNumericId = /^\d+$/.test(numericId);
+        if (isNumericId) {
+          try {
+            mediaInfo = yield getTMDBDetails(numericId, mediaType);
+          } catch (error) {
+            mediaInfo = { title: tmdbId, year: null };
+          }
+        } else {
+          mediaInfo = { title: tmdbId, year: null };
+        }
+      }
+      const searchResults = yield searchMovies(mediaInfo.title);
+      if (searchResults.length === 0)
+        return [];
+      const bestMatch = findBestTitleMatch(mediaInfo, searchResults);
+      if (!bestMatch)
+        return [];
+      console.log(`[Movies4u] Found match: ${bestMatch.title}`);
+      const yearMatch = bestMatch.title.match(/\((20\d{2}|19\d{2})\)/);
+      if (mediaInfo.title.toLowerCase() === tmdbId.toLowerCase()) {
+        mediaInfo.title = bestMatch.title.split("(")[0].trim();
+        if (yearMatch)
+          mediaInfo.year = yearMatch[1];
+      }
+      const watchLinks = yield extractWatchLinks(bestMatch.url);
+      if (watchLinks.length === 0)
+        return [];
+      const streams = [];
+      const visited = /* @__PURE__ */ new Set();
+      for (const watchLink of watchLinks) {
+        const results = yield smartExtract(watchLink.url, 0, 2, visited);
+        for (const result of results) {
+          if (result.url) {
+            streams.push({
+              name: "Movies4u",
+              title: formatStreamTitle(mediaInfo, result),
+              url: result.url,
+              quality: result.quality || watchLink.quality,
+              headers: { Referer: watchLink.url }
+            });
+          }
+        }
+      }
+      console.log(`[Movies4u] Extracted ${streams.length} streams`);
+      return streams;
+    } catch (error) {
+      console.error("[Movies4u] getStreams failed:", error.message);
+      return [];
+    }
+  });
+}
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { getStreams };
+} else {
+  global.getStreams = { getStreams };
+}
